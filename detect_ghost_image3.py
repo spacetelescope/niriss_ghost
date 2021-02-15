@@ -31,7 +31,8 @@ if __name__ == "__main__":
 
     Return:
     =======
-    A copy of the source catalog, with a ghost flag column, "is_this_ghost", added.
+    A subset of the input source catalog, with a ghost flag column, "is_this_ghost", added.
+    For ghosts without original sources in the input catalog but in a catalog from astroquery, idsrc is set to >idpub.
 
     '''
 
@@ -45,6 +46,9 @@ if __name__ == "__main__":
     parser.add_argument('--f_tweak_imaege2',default=False,help='Tweak Image2 products.', type=str2bool)
     parser.add_argument('--f_mirage',default=True,help='Is dataset created by Mirage?', type=str2bool)
     args = parser.parse_args()
+    
+    # ghosts with idsrc greater than the following number are identified through the Catalog method.
+    idpub = 100000
 
     # Flags for analysis method;
     f_rootmethod = True
@@ -98,10 +102,7 @@ if __name__ == "__main__":
         # Empty Array for ghost
         flag_gst = np.zeros(len(fd_cat['id']), 'int')
         prob_gst = np.zeros(len(fd_cat['id']), 'float')
-        id_gst = np.zeros(len(fd_cat['id']), 'int')
-
-        fw = open('%s/ghs_%s.reg'%(DIR_OUT,file_root), 'w')
-        fw.write('# xgst ygst\n')
+        id_src = np.zeros(len(fd_cat['id']), 'int')
 
         ##################
         # No1; Root method
@@ -112,20 +113,15 @@ if __name__ == "__main__":
                             xshift=xshift, yshift=yshift)
 
             for ii in range(len(fd_cat['id'])):
-                # This is because photutils is 0-based, while ds9 is not.
-                shift = 1.0 
-                if fd_cat['source_sum'][ii]>0:
-                    #fw.write('%.3f %.3f\n'%(fd_cat['xcentroid'][ii].value, fd_cat['ycentroid'][ii].value))
-                    fw.write('%.3f %.3f\n'%(gst[0][ii]+shift, gst[1][ii]+shift))
 
                 # Check the position:
                 rtmp = np.sqrt( (fd_cat['xcentroid'].value-gst[0][ii])**2 + (fd_cat['ycentroid'].value-gst[1][ii])**2 )
                 iiy = np.argmin(rtmp)
 
                 # Check if source at the predicted positions is brighter than object of [ii].
-                if rtmp[iiy] < rlim and (fd_cat['source_sum'][ii]-fd_cat['source_sum'][iiy]) > 0:
+                if rtmp[iiy] < rlim and (fd_cat['source_sum'][iiy]-fd_cat['source_sum'][ii]) > 0:
 
-                    id_gst[ii] = fd_cat['id'][iiy]
+                    id_src[ii] = fd_cat['id'][iiy]
                     flag_gst[ii] = 1
                     
                     #if f_verbose:
@@ -183,31 +179,22 @@ if __name__ == "__main__":
             x, y = im.meta.wcs.backward_transform(result[0][RA_key],result[0][DE_key])
             id_pub = np.arange(0,len(x),1)
 
-            if False:
-                # Add manually added sources to the query result;
-                ra_ext = np.asarray([82.74528081, 82.74549915])
-                de_ext = np.asarray([-68.79706061, -68.79157048])
-                x_ext, y_ext = im.meta.wcs.backward_transform(ra_ext, de_ext)
-                plt.scatter(x_ext, y_ext, marker='o', s=10, edgecolor='r', facecolor='none', label='')
-                flux_GS_ext = [100,100]
-                x = np.append(x,x_ext)
-                y = np.append(y,y_ext)
-                flux_GS = np.append(flux_GS, flux_GS_ext)
+            ra_src_pub = np.zeros(len(flag_gst[:]),'float')
+            dec_src_pub = np.zeros(len(flag_gst[:]),'float')
+            
+            # Get ghost xy;
+            gst_cat = get_ghost(x, y, flux=flux_GS, filt=pupil, xshift=xshift, yshift=yshift)
 
-
-            gst_cat = get_ghost(x, y, flux=flux_GS, filt=pupil, xshift=xshift, yshift=yshift)            
+            # Cross match;
             for ii in range(len(flag_gst[:])):
                 if flag_gst[ii] != 1: # If the source has not been flagged above yet.
-
-                    # This is because photutils is 0-based, while ds9 is not.
-                    shift = 1.0 
 
                     # Check the position:
                     rtmp = np.sqrt( (fd_cat['xcentroid'].value[ii] - gst_cat[0])**2 + (fd_cat['ycentroid'].value[ii] - gst_cat[1])**2 )
                     iiy = np.argmin(rtmp)
 
-                    if rtmp[iiy] < rlim: # and (fd_cat['source_sum'][ii] - fd_cat['source_sum'][iiy])>0 :
-                        id_gst[ii] = fd_cat['id'][ii]
+                    if rtmp[iiy] < rlim and (flux_GS[iiy] - fd_cat['source_sum'][ii])>0 :
+                        id_src[ii] = idpub + ii
                         flag_gst[ii] = 1
                         prob_pos = np.exp(-0.5 * rtmp[iiy]**2)
                         residual = np.abs(fd_cat['source_sum'][ii]*frac_ghost - flux_GS[iiy])
@@ -215,55 +202,72 @@ if __name__ == "__main__":
                         prob_flux = np.exp(-0.5 * residual**2/expectation)
                         prob_gst[ii] = prob_pos * prob_flux
 
+                        ra_src_pub[ii] = result[0][RA_key][iiy]
+                        dec_src_pub[ii] = result[0][DE_key][iiy]
 
-        # Close file
-        fw.close()
 
         # Save result;
         if True:
+            fig = plt.figure(figsize=(6,4))
+            fig.subplots_adjust(top=0.93, bottom=0.1, left=0.05, right=0.9, hspace=0.05, wspace=0.2)
+            ax = plt.subplot(111)
+
             fd_sci = fits.open(infile)[1].data
-            plt.imshow(fd_sci, vmin=0, vmax=1)
+            ax.imshow(fd_sci, vmin=0, vmax=1)
 
             # All sources;
-            plt.scatter(fd_cat['xcentroid'].value, fd_cat['ycentroid'].value, marker='o', s=30, edgecolor='cyan', color='', label='i2d sources')
+            ax.scatter(fd_cat['xcentroid'].value, fd_cat['ycentroid'].value, marker='o', s=30, edgecolor='cyan', color='', label='i2d sources')
 
             # Public;
             if False:
-                plt.scatter(x, y, marker='o', s=30, edgecolor='lightgreen', color='', label='GSC sources')
+                ax.scatter(x, y, marker='o', s=30, edgecolor='lightgreen', color='', label='GSC sources')
             
             fw_cat = open('%s/ghost_detected_cat_%s.txt'%(DIR_OUT, file_root),'w')
-            fw_cat.write('# id raghs decghs xghs yghs\n')
-
-            fw = open('%s/ghost_detected_%s.reg'%(DIR_OUT, file_root),'w')
-            fw.write('# xghs yghs\n')
+            fw_cat.write('# id ra dec x y is_this_ghost id_src ra_src dec_src\n')
 
             f_label = True
             for ii in range(len(flag_gst)):
+                yghs = fd_cat['ycentroid'].value[ii]
+                xghs = fd_cat['xcentroid'].value[ii]
                 if flag_gst[ii] == 1:
-                    iix = np.where(fd_cat['id']==id_gst[ii])
-                    yghs = fd_cat['ycentroid'].value[iix]
-                    xghs = fd_cat['xcentroid'].value[iix]
+                    iix = np.where(fd_cat['id']==id_src[ii])
+                    if len(iix[0])>0:
+                        ysrc = fd_cat['ycentroid'].value[iix]
+                        xsrc = fd_cat['xcentroid'].value[iix]
+                        rasrc = fd_cat['sky_centroid'].ra.value[iix]
+                        decsrc = fd_cat['sky_centroid'].dec.value[iix]
 
-                    if f_label:
-                        label = 'IDed ghost'
-                        f_label = False
-                    else:
-                        label = ''
+                        if f_label:
+                            label = 'IDed ghost'
+                            f_label = False
+                        else:
+                            label = ''
 
-                    plt.scatter(xghs, yghs, marker='s', s=30, edgecolor='r', color='', label=label)
-                    shift = 1.0 # This is because photutils is 0-based, while ds9 is not.
-                    fw.write('%.3f %.3f\n'%(xghs+shift, yghs+shift))
-                    fw_cat.write('%d %.7f %.7f %.7f %.7f\n'\
-                                %(fd_cat['id'][iix], \
-                                fd_cat['sky_centroid'][iix].ra.value, fd_cat['sky_centroid'][iix].dec.value, xghs, yghs))
+                        ax.scatter(xghs, yghs, marker='s', s=30, edgecolor='r', color='', label=label)
+                        shift = 1.0 # This is because photutils is 0-based, while ds9 is not.
+                        fw_cat.write('%d %.7f %.7f %.7f %.7f %s %d %.7f %.7f\n'\
+                                    %(fd_cat['id'][ii], \
+                                    fd_cat['sky_centroid'][ii].ra.value, fd_cat['sky_centroid'][ii].dec.value, \
+                                    xghs, yghs, 'True', fd_cat['id'][iix], rasrc, decsrc))
+
+                    else: # Ghost from outside FoV;
+                        fw_cat.write('%d %.7f %.7f %.7f %.7f %s %d %.7f %.7f\n'\
+                                    %(fd_cat['id'][ii], \
+                                    fd_cat['sky_centroid'][ii].ra.value, fd_cat['sky_centroid'][ii].dec.value, \
+                                    xghs, yghs, 'True', id_src[ii], ra_src_pub[ii], dec_src_pub[ii]))
+
+                else:
+                    fw_cat.write('%d %.7f %.7f %.7f %.7f %s %d %.7f %.7f\n'\
+                                %(fd_cat['id'][ii], \
+                                fd_cat['sky_centroid'][ii].ra.value, fd_cat['sky_centroid'][ii].dec.value, \
+                                xghs, yghs, 'False', -99, np.nan, np.nan))
 
 
             # Plot GAP:
             gaps = get_gap(pupil)
-            plt.scatter(gaps[0], gaps[1], marker='x', s=30, color='orange', label='GAP')
+            ax.scatter(gaps[0], gaps[1], marker='x', s=30, color='orange', label='GAP')
             fw_cat.close()
-            fw.close()
-            plt.legend(loc=0)
+            ax.legend(bbox_to_anchor=(1., 1.05))
             plt.savefig('%s/results_%s.png'%(DIR_OUT,file_root), dpi=300)
             plt.close()
 

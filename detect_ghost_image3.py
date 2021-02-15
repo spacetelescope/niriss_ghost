@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
     Return:
     =======
-    A copy of the source catalog, with ghost flag added.
+    A copy of the source catalog, with a ghost flag column, "is_this_ghost", added.
 
     '''
 
@@ -62,14 +62,13 @@ if __name__ == "__main__":
     DIR_DATA = './'
 
     # Image;
-    infiles = [args.input_image]
+    infiles = args.input_image
     # Catalog;
     #files_cat = [infile.replace('_i2d.fits','_cat_man.ecsv') for infile in infiles]
-    files_cat = [args.input_catalog]
+    files_cat = args.input_catalog
     
-    for ff,infile in enumerate(infiles[:]):
-
-        file_root = infile.replace('.fits','')
+    for ff,infile in enumerate(infiles):
+        file_root = infile.split('/')[-1].replace('.fits','')
 
         # Read header;
         hd = fits.open(infile)[0].header
@@ -162,7 +161,7 @@ if __name__ == "__main__":
             result = Vizier.query_region(coord.SkyCoord(ra=RA, dec=DEC,
                                                         unit=(u.deg, u.deg),
                                                         frame='icrs'),
-                                        width='%.1fs'%(width_detector*CDELT1), 
+                                        width='%.1fs'%(width_detector*CDELT1*3600),
                                         catalog=["I/345/gaia2"], 
                                         column_filters={'Gmag': '<20'})
                                         #catalog=["GSC"]) # GSC has some issues..
@@ -258,6 +257,7 @@ if __name__ == "__main__":
                                 %(fd_cat['id'][iix], \
                                 fd_cat['sky_centroid'][iix].ra.value, fd_cat['sky_centroid'][iix].dec.value, xghs, yghs))
 
+
             # Plot GAP:
             gaps = get_gap(pupil)
             plt.scatter(gaps[0], gaps[1], marker='x', s=30, color='orange', label='GAP')
@@ -266,6 +266,7 @@ if __name__ == "__main__":
             plt.legend(loc=0)
             plt.savefig('%s/results_%s.png'%(DIR_OUT,file_root), dpi=300)
             plt.close()
+
 
         '''
         from utils import tweak_imaege2

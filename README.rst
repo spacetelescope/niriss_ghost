@@ -15,7 +15,7 @@ Users are advised to apply this code to final NIRISS images, so that they can av
 
 By providing _i2d.fits image and source catalog to this script, you can:
 - identify possible ghost in the input image
-- get a source catalog with a new flag column, "is_this_ghost"
+- get a source catalog with a new flag column, "is_this_ghost".
 
 
 Simulation of ghosts in a NIRISS scene
@@ -24,3 +24,7 @@ Simulation of ghosts in a NIRISS scene
 Ghost simulation module has been implemented in Mirage. Take a look at the documentation `here <https://mirage-data-simulator.readthedocs.io/en/latest/ghosts.html>`__.
 
 An example notebook is also available from this repository, which demonstrates a case with a custom input file for ghosts.
+
+Result with a custom fits stamp.
+
+.. image:: ./figure/demo_custom.png

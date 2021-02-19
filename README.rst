@@ -18,8 +18,17 @@ By providing _i2d.fits image and source catalog to this script, you can:
 - get a source catalog with a new flag column, "is_this_ghost".
 
 
-Simulation of ghosts in a NIRISS scene
---------------------------------------
+Usage
+-----
+
+.. code-block:: bash
+
+    python detect_ghost_image3.py [image] [catalog]
+
+
+
+Appendix: Simulation of ghosts in a NIRISS scene
+------------------------------------------------
 
 Ghost simulation module has been implemented in Mirage. Take a look at the documentation `here <https://mirage-data-simulator.readthedocs.io/en/latest/ghosts.html>`__.
 

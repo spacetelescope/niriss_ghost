@@ -47,7 +47,7 @@ def get_gap(filt, file_gap='/ifs/jwst/wit/niriss/tmorishita/GhostDetection/ghost
 
 
 
-def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, file_gap='/ifs/jwst/wit/niriss/tmorishita/GhostDetection/ghost_analysis/gap_summary.txt'):
+def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tmp=[None,None,None], file_gap='/ifs/jwst/wit/niriss/tmorishita/GhostDetection/ghost_analysis/gap_summary.txt'):
     '''
     Purpose:
     ========
@@ -58,12 +58,12 @@ def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, file_g
     ======
     x,y : coordinates for sources (arrays).
     flux : fluxes for sources (array)
+    gap_tmp : Manual input for coordinates of GAP and flux fraction. (x,y,f_flux)
 
     *shift may be used, because photutils is 0-based, while ds9 is not.
 
     xshift :
-    yshift :
-
+    yshift :    
 
     Return:
     =======
@@ -72,8 +72,11 @@ def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, file_g
     
     x,y,flux : input source coordinates and fluxes.
     '''
-
-    xgap, ygap, frac = get_gap(filt, file_gap=file_gap)
+    
+    if gap_tmp[0] == None:
+        xgap, ygap, frac = get_gap(filt, file_gap=file_gap)
+    else:
+        xgap, ygap, frac = gap_tmp
     
     xgap += shift
     ygap += shift

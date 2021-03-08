@@ -21,6 +21,8 @@ By providing _i2d.fits image and source catalog to this script, you can:
 Usage
 -----
 
+Ghost detection in a calibrated image (i.e. _i2d.fits from the JWST pipeline).
+
 .. code-block:: bash
 
     python detect_ghost_image3.py [image] [catalog]
@@ -32,6 +34,20 @@ Optional arguments:
 - --o: Output directory. Default is set to the working directory.
 - --f_mirage: Is the input image created by Mirage? If not (i.e. on-sky data), set this False.
 
+
+Determine GAP coordinates based on a calibrated image (i.e. _i2d.fits from the JWST pipeline).
+
+.. code-block:: bash
+
+    python get_gap.py [image] [catalog]
+
+Optional arguments:
+
+- --nmc: Number of MCMC iterations (3000 default).
+- --nwalkers: Number of walkers (20 default).
+- --check_flux: Use flux ratio for posterior calculation (True default).
+
+
 Appendix: Simulation of ghosts in a NIRISS scene
 ------------------------------------------------
 
@@ -39,6 +55,7 @@ Ghost simulation module has been implemented in Mirage. Take a look at the docum
 
 An example notebook is also available from this repository, which demonstrates a case with a custom input file for ghosts.
 
-Result with a custom fits stamp.
+
+Result with a custom fits stamp:
 
 .. image:: ./figure/demo_custom.png

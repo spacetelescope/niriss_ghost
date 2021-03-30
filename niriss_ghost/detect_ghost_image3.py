@@ -29,10 +29,24 @@ if __name__ == "__main__":
     2. Catalog method: Retrieve bright sources from all sky catalogs (here GAIA, through astroquery),
     then apply the same method as for root method to predict and confirm any sources in image3 catalog as ghosts.
 
+
+    Arguments:
+    ==========
+    f_mirage (bool): If input images are real data, turn this off. If images are from Mirage, turn this on. 
+        This is due to the fact that ghosts were added in the seed image dimention, whereas analysis is done in i2d image.
+
+    f_tweak_imaege2 (bool): Ghost detection in image2 products. Currently not supported.
+
+
+    Note:
+    =====
+    Ghost detection must be done on the distortion corrected frame, as the GAP coordinates were calculated so.
+
+
     Return:
     =======
     A subset of the input source catalog, with a ghost flag column, "is_this_ghost", added.
-    For ghosts without original sources in the input catalog but in a catalog from astroquery, idsrc is set to >idpub.
+    For ghosts without original sources in the input catalog but in a catalog from astroquery, idsrc is set to > idarx.
 
     '''
 
@@ -44,11 +58,11 @@ if __name__ == "__main__":
     parser.add_argument('--frac_ghost',default=0.01,help='Flux fraction for ghosts.', type=float)
     parser.add_argument('--o',default='./',help='Output directory.', type=str)
     parser.add_argument('--f_tweak_imaege2',default=False,help='Tweak Image2 products.', type=str2bool)
-    parser.add_argument('--f_mirage',default=True,help='Is dataset created by Mirage?', type=str2bool)
+    parser.add_argument('--f_mirage',default=True,help='Is input image created by Mirage?', type=str2bool)
     args = parser.parse_args()
     
     # ghosts with idsrc greater than the following number are identified through the Catalog method.
-    idpub = 100000
+    idarx = 100000
 
     # Flags for analysis method;
     f_rootmethod = True
@@ -61,9 +75,6 @@ if __name__ == "__main__":
     DIR_OUT = args.o    
     if not os.path.exists(DIR_OUT):
         os.mkdir(DIR_OUT)
-
-    # Ghost detection must be done in distortion corrected frame
-    DIR_DATA = './'
 
     # Image;
     infiles = args.input_image
@@ -82,7 +93,17 @@ if __name__ == "__main__":
         XOFFSET = hd['XOFFSET']
         YOFFSET = hd['YOFFSET']
         CDELT1 = hd1['CDELT1']
-        
+
+        try:
+            # Magnitude zeropoint:
+            PIXAR_SR = hd1['PIXAR_SR'] # str / pixel
+            PHOTMJSR = hd1['PHOTMJSR'] # Mjy / str
+            fluxzp = PIXAR_SR * PHOTMJSR * 1e6
+            magzp = -2.5 * np.log10(fluxzp) + 8.9
+        except:
+            magzp = 25.0
+            print('Magzp cannot be calculated from header. Set to %.1f'%magzp)
+
         if args.f_mirage:
             # Add shift for image size difference.
             # This is due to the fact that ghosts were added in the seed image dimention, whereas analysis is done in i2d image.
@@ -154,6 +175,7 @@ if __name__ == "__main__":
             width_detector = 2048 + wid_extra
             Vizier.ROW_LIMIT = 1000
 
+            # Retrieve source catalog in a box.
             result = Vizier.query_region(coord.SkyCoord(ra=RA, dec=DEC,
                                                         unit=(u.deg, u.deg),
                                                         frame='icrs'),
@@ -166,8 +188,7 @@ if __name__ == "__main__":
             # Input magnitude;
             mvega2ab = -0.08
             GSmag = result[0]['Gmag'] + mvega2ab
-            magzp = 25.0
-            flux_GS = 10**(-(GSmag-magzp)/(2.5)) # Fnu with magzp
+            flux_GS = 10**(-(GSmag-magzp)/(2.5)) # Fnu with the same magzp as input image.
 
             RA_key = 'RA_ICRS'
             DE_key = 'DE_ICRS'
@@ -193,8 +214,8 @@ if __name__ == "__main__":
                     rtmp = np.sqrt( (fd_cat['xcentroid'].value[ii] - gst_cat[0])**2 + (fd_cat['ycentroid'].value[ii] - gst_cat[1])**2 )
                     iiy = np.argmin(rtmp)
 
-                    if rtmp[iiy] < rlim and (flux_GS[iiy] - fd_cat['source_sum'][ii])>0 :
-                        id_src[ii] = idpub + ii
+                    if rtmp[iiy] < rlim and (flux_GS[iiy] - fd_cat['source_sum'][ii]) > 0:
+                        id_src[ii] = idarx + ii
                         flag_gst[ii] = 1
                         prob_pos = np.exp(-0.5 * rtmp[iiy]**2)
                         residual = np.abs(fd_cat['source_sum'][ii]*frac_ghost - flux_GS[iiy])
@@ -218,10 +239,11 @@ if __name__ == "__main__":
             # All sources;
             ax.scatter(fd_cat['xcentroid'].value, fd_cat['ycentroid'].value, marker='o', s=30, edgecolor='cyan', color='', label='i2d sources')
 
-            # Public;
+            # Source in retrieved catalog;
             if False:
                 ax.scatter(x, y, marker='o', s=30, edgecolor='lightgreen', color='', label='GSC sources')
-            
+
+            # Write to an ascii;            
             fw_cat = open('%s/ghost_detected_cat_%s.txt'%(DIR_OUT, file_root),'w')
             fw_cat.write('# id ra dec x y is_this_ghost id_src ra_src dec_src\n')
 
@@ -262,11 +284,11 @@ if __name__ == "__main__":
                                 fd_cat['sky_centroid'][ii].ra.value, fd_cat['sky_centroid'][ii].dec.value, \
                                 xghs, yghs, 'False', -99, np.nan, np.nan))
 
+            fw_cat.close()
 
             # Plot GAP:
             gaps = get_gap(pupil)
             ax.scatter(gaps[0], gaps[1], marker='x', s=30, color='orange', label='GAP')
-            fw_cat.close()
             ax.legend(bbox_to_anchor=(1., 1.05))
             plt.savefig('%s/results_%s.png'%(DIR_OUT,file_root), dpi=300)
             plt.close()

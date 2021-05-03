@@ -59,7 +59,9 @@ if __name__ == "__main__":
     parser.add_argument('--o',default='./',help='Output directory.', type=str)
     parser.add_argument('--f_tweak_imaege2',default=False,help='Tweak Image2 products.', type=str2bool)
     parser.add_argument('--f_mirage',default=True,help='Is input image created by Mirage?', type=str2bool)
+    parser.add_argument('--keyword_flux',default='source_sum',help='Keyword for a flux column in input_catalog', type=str)
     args = parser.parse_args()
+    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nRunning ghost detection script\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
     
     # ghosts with idsrc greater than the following number are identified through the Catalog method.
     idarx = 100000
@@ -125,12 +127,28 @@ if __name__ == "__main__":
         prob_gst = np.zeros(len(fd_cat['id']), 'float')
         id_src = np.zeros(len(fd_cat['id']), 'int')
 
+        # Check flux column:
+        try:
+            flux_tmp = fd_cat[args.keyword_flux]
+            keyword_flux = args.keyword_flux
+            flux_cat = fd_cat[keyword_flux]
+            try:# Remove unit, if it has any.
+                flux_cat = fd_cat[keyword_flux].value
+            except:
+                pass
+        except:
+            print('\n!!!\n`%s` column is not found in the input catalog.'%args.keyword_flux)
+            print('Specify the flux column by adding --keyword_flux argument.')
+            print('e.g.,\n python detect_ghost_image3.py image catalog --keyword_flux aper_total_flux')
+            print('\nExiting.')
+            sys.exit()
+
         ##################
         # No1; Root method
         ##################
         if f_rootmethod:
             gst = get_ghost(fd_cat['xcentroid'][:].value, fd_cat['ycentroid'][:].value, \
-                            flux=fd_cat['source_sum'][:], filt=pupil,\
+                            flux=flux_cat[:], filt=pupil,\
                             xshift=xshift, yshift=yshift)
 
             for ii in range(len(fd_cat['id'])):
@@ -140,7 +158,7 @@ if __name__ == "__main__":
                 iiy = np.argmin(rtmp)
 
                 # Check if source at the predicted positions is brighter than object of [ii].
-                if rtmp[iiy] < rlim and (fd_cat['source_sum'][iiy]-fd_cat['source_sum'][ii]) > 0:
+                if rtmp[iiy] < rlim and (flux_cat[iiy]-flux_cat[ii]) > 0:
 
                     id_src[ii] = fd_cat['id'][iiy]
                     flag_gst[ii] = 1
@@ -149,8 +167,8 @@ if __name__ == "__main__":
                     #    print('Found an object at r=%.2f pixel'%(rtmp[iiy]))
                     
                     prob_pos = np.exp(-0.5 * rtmp[iiy]**2)
-                    residual = np.abs(fd_cat['source_sum'][ii]*frac_ghost - fd_cat['source_sum'][iiy])
-                    expectation = fd_cat['source_sum'][ii]*frac_ghost
+                    residual = np.abs(flux_cat[ii]*frac_ghost - flux_cat[iiy])
+                    expectation = flux_cat[ii]*frac_ghost
                     prob_flux = np.exp(-0.5 * residual**2/expectation)
                     
                     prob_gst[ii] = prob_pos * prob_flux
@@ -214,12 +232,12 @@ if __name__ == "__main__":
                     rtmp = np.sqrt( (fd_cat['xcentroid'].value[ii] - gst_cat[0])**2 + (fd_cat['ycentroid'].value[ii] - gst_cat[1])**2 )
                     iiy = np.argmin(rtmp)
 
-                    if rtmp[iiy] < rlim and (flux_GS[iiy] - fd_cat['source_sum'][ii]) > 0:
+                    if rtmp[iiy] < rlim and (flux_GS[iiy] - flux_cat[ii]) > 0:
                         id_src[ii] = idarx + ii
                         flag_gst[ii] = 1
                         prob_pos = np.exp(-0.5 * rtmp[iiy]**2)
-                        residual = np.abs(fd_cat['source_sum'][ii]*frac_ghost - flux_GS[iiy])
-                        expectation = fd_cat['source_sum'][ii]*frac_ghost
+                        residual = np.abs(flux_cat[ii]*frac_ghost - flux_GS[iiy])
+                        expectation = flux_cat[ii]*frac_ghost
                         prob_flux = np.exp(-0.5 * residual**2/expectation)
                         prob_gst[ii] = prob_pos * prob_flux
 

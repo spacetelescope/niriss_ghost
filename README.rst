@@ -33,6 +33,7 @@ Optional arguments:
 - --frac_ghost: Fraction flux of a ghost compared to the source.
 - --o: Output directory. Default is set to the working directory.
 - --f_mirage: Is the input image created by Mirage? If not (i.e. on-sky data), set this False.
+- --keyword_flux: Column name for flux in ``catalog``. Default is source_sum (one that comes with photutils.).
 
 
 Determine GAP coordinates based on a calibrated image (i.e. _i2d.fits from the JWST pipeline).

@@ -140,7 +140,7 @@ if __name__ == "__main__":
             print('\n!!!\n`%s` column is not found in the input catalog.'%args.keyword_flux)
             print('Specify the flux column by adding --keyword_flux argument.')
             print('e.g.,\n python detect_ghost_image3.py image catalog --keyword_flux aper_total_flux')
-            print('\nExiting.')
+            print('\nNo ghost hunting. Exiting.')
             sys.exit()
 
         ##################
@@ -255,11 +255,11 @@ if __name__ == "__main__":
             ax.imshow(fd_sci, vmin=0, vmax=1)
 
             # All sources;
-            ax.scatter(fd_cat['xcentroid'].value, fd_cat['ycentroid'].value, marker='o', s=30, edgecolor='cyan', color='', label='i2d sources')
+            ax.scatter(fd_cat['xcentroid'].value, fd_cat['ycentroid'].value, marker='o', s=30, edgecolor='cyan', color='none', label='i2d sources')
 
             # Source in retrieved catalog;
             if False:
-                ax.scatter(x, y, marker='o', s=30, edgecolor='lightgreen', color='', label='GSC sources')
+                ax.scatter(x, y, marker='o', s=30, edgecolor='lightgreen', color='none', label='GSC sources')
 
             # Write to an ascii;            
             fw_cat = open('%s/ghost_detected_cat_%s.txt'%(DIR_OUT, file_root),'w')
@@ -283,7 +283,7 @@ if __name__ == "__main__":
                         else:
                             label = ''
 
-                        ax.scatter(xghs, yghs, marker='s', s=30, edgecolor='r', color='', label=label)
+                        ax.scatter(xghs, yghs, marker='s', s=30, edgecolor='r', color='none', label=label)
                         shift = 1.0 # This is because photutils is 0-based, while ds9 is not.
                         fw_cat.write('%d %.7f %.7f %.7f %.7f %s %d %.7f %.7f\n'\
                                     %(fd_cat['id'][ii], \

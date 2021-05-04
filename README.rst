@@ -15,7 +15,7 @@ Users are advised to apply this code to final NIRISS images, so that they can av
 By providing _i2d.fits image and source catalog to this script, you can:
 
 - identify possible ghost in the input image
-- get a source catalog with a new flag column, "is_this_ghost".
+- get a source catalog with a new flag column, ``is_this_ghost``.
 
 
 Usage
@@ -36,7 +36,7 @@ Optional arguments:
 - --keyword_flux: Column name for flux in ``catalog``. Default is source_sum (one that comes with photutils.).
 
 
-Determine GAP coordinates based on a calibrated image (i.e. _i2d.fits from the JWST pipeline).
+Determine ghost axis point (GAP) coordinates based on a calibrated image (i.e. _i2d.fits from the JWST pipeline).
 
 .. code-block:: bash
 

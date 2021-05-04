@@ -52,7 +52,7 @@ def get_gap(filt, file_gap=None):
 
 
 
-def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tmp=[None,None,None], file_gap='/ifs/jwst/wit/niriss/tmorishita/GhostDetection/ghost_analysis/gap_summary.txt'):
+def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tmp=[None,None,None], file_gap=None):
     '''
     Purpose:
     ========
@@ -77,6 +77,11 @@ def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tm
     
     x,y,flux : input source coordinates and fluxes.
     '''
+    if file_gap == None:
+        import os
+        this_path = os.path.realpath(__file__)
+        file_gap = '%s/gap_summary.txt'%(this_path.replace('utils.py',''))
+        print('Using gap summary file: %s'%file_gap)
     
     if gap_tmp[0] == None:
         xgap, ygap, frac = get_gap(filt, file_gap=file_gap)

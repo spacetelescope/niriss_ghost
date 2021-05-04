@@ -59,8 +59,8 @@ setup(
     url = "https://github.com/mtakahiro",
     download_url = "https://github.com/",
     packages=['niriss_ghost'],#,'example'
-    #packages = find_packages(),
-    package_dir={'src': 'src'},
+    package_data={'niriss_ghost' : ['gap_summary.txt']},
+    #package_dir={'src': 'src'},
     requires=[],
     classifiers=[
         "Development Status :: 1 - Planning",

@@ -13,7 +13,7 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-def get_gap(filt, file_gap='/ifs/jwst/wit/niriss/tmorishita/GhostDetection/ghost_analysis/gap_summary.txt'):
+def get_gap(filt, file_gap=None):
     '''
     Purpose:
     ========
@@ -32,6 +32,11 @@ def get_gap(filt, file_gap='/ifs/jwst/wit/niriss/tmorishita/GhostDetection/ghost
     GAP is based on CV3 data.
     We currently do not know fractional flux, tab_gap['frac_50'], i.e. there may be positional dependence too.
     '''
+    if file_gap == None:
+        import os
+        this_path = os.path.realpath(__file__)
+        file_gap = '%s/gap_summary.txt'%(this_path.replace('utils.py',''))
+        print('Using gap summary file: %s'%file_gap)
 
     tab_gap = ascii.read(file_gap)
     iix = np.where(tab_gap['filt']==filt.upper())

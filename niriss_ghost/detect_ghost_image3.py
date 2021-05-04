@@ -94,7 +94,11 @@ if __name__ == "__main__":
         pupil = hd['PUPIL']
         XOFFSET = hd['XOFFSET']
         YOFFSET = hd['YOFFSET']
-        CDELT1 = hd1['CDELT1']
+        try:
+            CDELT1 = hd1['CDELT1']
+        except:
+            # _cal.fits
+            CDELT1 = np.abs(hd1['CD1_1'])
 
         try:
             # Magnitude zeropoint:

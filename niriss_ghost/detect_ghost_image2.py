@@ -62,6 +62,7 @@ if __name__ == "__main__":
     parser.add_argument('--f_tweak_imaege2',default=False,help='Tweak DQ array in the input Image2 products.', type=str2bool)
     parser.add_argument('--f_mirage',default=True,help='Is input image created by Mirage?', type=str2bool)
     parser.add_argument('--keyword_flux',default='source_sum',help='Keyword for a flux column in input_catalog', type=str)
+    parser.add_argument('--segmap',default=None,help='Segmentation map associated with input_catalog', type=str)
     args = parser.parse_args()
     print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nRunning ghost detection script\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
     
@@ -318,12 +319,16 @@ if __name__ == "__main__":
             plt.savefig('%s/results_%s.png'%(DIR_OUT,file_root), dpi=300)
             plt.close()
 
-
+        # Tweak DQ array;
         if f_tweak_imaege2:
             from utils import tweak_imaege2
             print('Tweaking DQ array')
             con = (flag_gst==1)
-            segfile = infile.replace('.fits', '_seg.fits')
+            if args.segmap != None:
+                segfile = args.segmap
+            else:
+                segfile = infile.replace('.fits', '_seg.fits')
+            
             outfile = infile.replace('.fits', '_gst.fits')
             if not os.path.exists(segfile):
                 print('\nSegmentation file (%s) is missing. No DQ tweaking.\nExiting.\n'%segfile)

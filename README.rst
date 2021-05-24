@@ -23,8 +23,8 @@ By providing _cal.fits image (IMAGE2 product) and source catalog to this script,
     :width: 800
     :align: center
 
-    How this works. Ghost detection, and then DQ tweaking here, can be applied to IMAGE2 products 
-    before these go into the IMAGE3 step.
+    *How this works. Ghost detection, and then DQ tweaking here, can be applied to IMAGE2 products 
+    before these go into the IMAGE3 step.*
 
 
 
@@ -44,8 +44,9 @@ Optional arguments:
 - --o: Output directory. Default is set to the working directory.
 - --f_mirage: Is the input image created by Mirage? If not (i.e. on-sky data), set this False.
 - --keyword_flux: Column name for flux in ``catalog``. Default is source_sum (one that comes with photutils.).
-- --f_tweak_imaege2: Change DQ arrays of the positions of the detected ghosts.
-
+- --f_tweak_imaege2: Change DQ arrays of the positions of the detected ghosts. You need the segmentation map of the provided catalog (_seg.fits).
+- --segmap: Segmentation map of the provided catalog, if f_tweak_imaege2==True. (Default: image.replace('.fits', '_seg.fits'))
+ 
 Determine ghost axis point (GAP) coordinates based on a calibrated image (i.e. _i2d.fits from the JWST pipeline).
 
 .. code-block:: bash
@@ -69,4 +70,7 @@ An example notebook is also available from this repository, which demonstrates a
 
 Result with a custom fits stamp:
 
-.. image:: ./figure/demo_custom.png
+.. figure:: ./figure/demo_custom.png
+    :width: 800
+    :align: center
+

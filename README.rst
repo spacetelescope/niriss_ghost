@@ -12,20 +12,30 @@ Purpose
 NIRISS WFSS and direct imaging modes are known to produce optical ghosts when there are bright sources in the observed field of view, as summarized `here <https://jwst-docs.stsci.edu/near-infrared-imager-and-slitless-spectrograph/niriss-instrumentation/niriss-gr150-grisms#NIRISSGR150Grisms-Ghosts>`__.
 Users are advised to apply this code to final NIRISS images, so that they can avoid confusing real sources with optical ghosts in their final products.
 
-By providing _i2d.fits image and source catalog to this script, you can:
+By providing _cal.fits image (IMAGE2 product) and source catalog to this script, you can:
 
 - identify possible ghost in the input image
 - get a source catalog with a new flag column, ``is_this_ghost``.
+- Turn DQ arrays of the pixles of the detected ghosts to ``DO_NOT_USE``, so IMAGE3 pipeline ignores these pixels.
+
+
+.. figure:: ./figure/DQ_masking.png
+    :width: 800
+    :align: center
+
+    How this works. Ghost detection, and then DQ tweaking here, can be applied to IMAGE2 products 
+    before these go into the IMAGE3 step.
+
 
 
 Usage
 -----
 
-Ghost detection in a calibrated image (i.e. _i2d.fits from the JWST pipeline).
+Ghost detection in a calibrated image (i.e. _cal.fits from the JWST pipeline).
 
 .. code-block:: bash
 
-    python detect_ghost_image3.py [image] [catalog]
+    python detect_ghost_image2.py [image] [catalog]
 
 Optional arguments:
 
@@ -34,7 +44,7 @@ Optional arguments:
 - --o: Output directory. Default is set to the working directory.
 - --f_mirage: Is the input image created by Mirage? If not (i.e. on-sky data), set this False.
 - --keyword_flux: Column name for flux in ``catalog``. Default is source_sum (one that comes with photutils.).
-
+- --f_tweak_imaege2: Change DQ arrays of the positions of the detected ghosts.
 
 Determine ghost axis point (GAP) coordinates based on a calibrated image (i.e. _i2d.fits from the JWST pipeline).
 

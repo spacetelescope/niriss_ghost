@@ -1,5 +1,6 @@
 import numpy as np
 import argparse
+import os
 from astropy.io import fits,ascii
 
 def str2bool(v):
@@ -33,7 +34,6 @@ def get_gap(filt, file_gap=None):
     We currently do not know fractional flux, tab_gap['frac_50'], i.e. there may be positional dependence too.
     '''
     if file_gap == None:
-        import os
         this_path = os.path.realpath(__file__)
         file_gap = '%s/gap_summary.txt'%(this_path.replace('utils.py',''))
         print('Using gap summary file: %s'%file_gap)
@@ -59,29 +59,32 @@ def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tm
     A function that gives expected ghost positions
     given positions of a source.
     
-    Input:
-    ======
-    x,y : coordinates for sources (arrays).
-    flux : fluxes for sources (array)
-    gap_tmp : Manual input for coordinates of GAP and flux fraction. (x,y,f_flux)
-
-    *shift may be used, because photutils is 0-based, while ds9 is not.
-
-    xshift :
-    yshift :    
+    Parameters:
+    ===========
+    x,y : arrays
+        coordinates for sources (arrays).
+    flux : array
+        fluxes for sources (array)
+    gap_tmp : 
+        Manual input for coordinates of GAP and flux fraction. (x,y,f_flux)
+    xshift : float
+        Shift may be used, because photutils is 0-based, while ds9 is not.
+    yshift : float
+        Shift may be used, because photutils is 0-based, while ds9 is not.
 
     Return:
     =======
-    xgs, ygs : coordinates for ghosts
-    flux_gs : fluxes for ghosts
-    
-    x,y,flux : input source coordinates and fluxes.
+    xgs, ygs :
+        coordinates for ghosts
+    flux_gs :
+        fluxes for ghosts    
+    x,y,flux :
+        input source coordinates and fluxes.
     '''
     if file_gap == None:
-        import os
         this_path = os.path.realpath(__file__)
         file_gap = '%s/gap_summary.txt'%(this_path.replace('utils.py',''))
-        print('Using gap summary file: %s'%file_gap)
+        #print('Using gap summary file: %s'%file_gap)
     
     if gap_tmp[0] == None:
         xgap, ygap, frac = get_gap(filt, file_gap=file_gap)
@@ -107,11 +110,6 @@ def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tm
 
 def tweak_imaege2(id_gst, infile, segfile, outfile=None, DQ_SET=1):
     '''
-    This script tweaks image2 DQ arrays, by making positions of detected ghost DQ=1 ("Do not use").
-
-    Return:
-    =======
-    Save fits files with _gsf.fits
     '''
     if not outfile == None:
         outfile = infile.replace('.fits','_gst.fits')
@@ -122,7 +120,8 @@ def tweak_imaege2(id_gst, infile, segfile, outfile=None, DQ_SET=1):
     with fits.open(outfile, mode='update') as hdul:
         for id in id_gst:
             con = np.where(seg == id)
+            # 1073741824
+            #hdul['DQ'].data[con] += DQ_SET
             hdul['DQ'].data[con] = DQ_SET
         
         hdul.flush()  # changes are written back to original.fits
-

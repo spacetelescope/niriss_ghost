@@ -22,7 +22,8 @@ def get_gap(filt, file_gap=None):
     
     Input:
     ======
-    filt : filter of interest.
+    filt : str
+        filter of interest.
    
     Return:
     =======
@@ -32,6 +33,7 @@ def get_gap(filt, file_gap=None):
     =====
     GAP is based on CV3 data.
     We currently do not know fractional flux, tab_gap['frac_50'], i.e. there may be positional dependence too.
+
     '''
     if file_gap == None:
         this_path = os.path.realpath(__file__)
@@ -108,7 +110,7 @@ def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tm
     return xgs,ygs,flux_gs,x,y,flux
 
 
-def tweak_imaege2(id_gst, infile, segfile, outfile=None, DQ_SET=1):
+def tweak_dq(id_gst, infile, segfile, outfile=None, DQ_SET=1):
     '''
     '''
     if not outfile == None:

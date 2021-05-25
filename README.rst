@@ -44,8 +44,8 @@ Optional arguments:
 - --o: Output directory. Default is set to the working directory.
 - --f_mirage: Is the input image created by Mirage? If not (i.e. on-sky data), set this False.
 - --keyword_flux: Column name for flux in ``catalog``. Default is source_sum (one that comes with photutils.).
-- --f_tweak_imaege2: Change DQ arrays of the positions of the detected ghosts. You need the segmentation map of the provided catalog (_seg.fits).
-- --segmap: Segmentation map of the provided catalog, if f_tweak_imaege2==True. (Default: image.replace('.fits', '_seg.fits'))
+- --f_tweak_dq: Change DQ arrays of the positions of the detected ghosts. You need the segmentation map of the provided catalog (_seg.fits).
+- --segmap: Segmentation map of the provided catalog, if f_tweak_dq==True. (Default: image.replace('.fits', '_seg.fits'))
  
 Determine ghost axis point (GAP) coordinates based on a calibrated image.
 

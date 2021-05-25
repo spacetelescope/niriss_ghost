@@ -35,8 +35,7 @@ if __name__ == "__main__":
     f_mirage : bool
         If input images are real data, turn this off. If images are from Mirage, turn this on. 
         This is due to the fact that ghosts were added in the seed image dimention, whereas analysis is done in i2d image.
-
-    f_tweak_imaege2 : bool
+    f_tweak_dq : bool
         Ghost detection in image2 products. Currently not supported.
 
 
@@ -59,7 +58,7 @@ if __name__ == "__main__":
     parser.add_argument('--rlim',default=10,help='Search radius for ghost around the predicted position (in pixel).', type=float)
     parser.add_argument('--frac_ghost',default=0.01,help='Flux fraction for ghosts.', type=float)
     parser.add_argument('--o',default='./',help='Output directory.', type=str)
-    parser.add_argument('--f_tweak_imaege2',default=False,help='Tweak DQ array in the input Image2 products.', type=str2bool)
+    parser.add_argument('--f_tweak_dq',default=True,help='Tweak DQ array of the input image.', type=str2bool)
     parser.add_argument('--f_mirage',default=True,help='Is input image created by Mirage?', type=str2bool)
     parser.add_argument('--keyword_flux',default='source_sum',help='Keyword for a flux column in input_catalog', type=str)
     parser.add_argument('--segmap',default=None,help='Segmentation map associated with input_catalog', type=str)
@@ -76,7 +75,7 @@ if __name__ == "__main__":
     f_verbose = args.f_verbose
     rlim = args.rlim
     frac_ghost = args.frac_ghost
-    f_tweak_imaege2 = args.f_tweak_imaege2
+    f_tweak_dq = args.f_tweak_dq
     DIR_OUT = args.o    
     if not os.path.exists(DIR_OUT):
         os.mkdir(DIR_OUT)
@@ -305,10 +304,10 @@ if __name__ == "__main__":
                                     xghs, yghs, 'True', id_src[ii], ra_src_pub[ii], dec_src_pub[ii]))
 
                 else:
-                    fw_cat.write('%d %.7f %.7f %.7f %.7f %s %d %.7f %.7f\n'\
+                    fw_cat.write('%d %.7f %.7f %.7f %.7f %s %f %f %f\n'\
                                 %(fd_cat['id'][ii], \
                                 fd_cat['sky_centroid'][ii].ra.value, fd_cat['sky_centroid'][ii].dec.value, \
-                                xghs, yghs, 'False', -99, np.nan, np.nan))
+                                xghs, yghs, 'False', np.nan, np.nan, np.nan))
 
             fw_cat.close()
 
@@ -320,8 +319,8 @@ if __name__ == "__main__":
             plt.close()
 
         # Tweak DQ array;
-        if f_tweak_imaege2:
-            from utils import tweak_imaege2
+        if f_tweak_dq:
+            from utils import tweak_dq
             print('Tweaking DQ array')
             con = (flag_gst==1)
             if args.segmap != None:
@@ -333,5 +332,5 @@ if __name__ == "__main__":
             if not os.path.exists(segfile):
                 print('\nSegmentation file (%s) is missing. No DQ tweaking.\nExiting.\n'%segfile)
                 sys.exit()
-            tweak_imaege2(fd_cat['id'][con], infile, segfile, outfile=outfile, DQ_SET=1)
+            tweak_dq(fd_cat['id'][con], infile, segfile, outfile=outfile, DQ_SET=1)
             print('Successfully done!\n')

@@ -256,7 +256,7 @@ if __name__ == "__main__":
             ax = plt.subplot(111)
 
             fd_sci = fits.open(infile)[1].data
-            ax.imshow(fd_sci, vmin=0, vmax=1)
+            ax.imshow(fd_sci, vmin=0, vmax=1, origin='lower')
 
             # All sources;
             ax.scatter(fd_cat['xcentroid'].value, fd_cat['ycentroid'].value, marker='o', s=30, edgecolor='cyan', color='none', label='i2d sources')

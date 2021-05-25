@@ -52,6 +52,10 @@ or in your python script;
     from niriss_ghost import detect_ghost_image2
     detect_ghost_image2.run(list-of-image, list-of-catalog)
 
+Input arguments:
+
+- image: Input image(s). If more than one, then comma separated string e.g., image1_cal.fits,image2_cal.fits
+- catalog: Input catalog(s). If more than one, then comma separated string e.g., image1.cat,image2.cat
 
 Optional arguments:
 
@@ -71,12 +75,17 @@ Determine ghost axis point (GAP) coordinates based on a calibrated image.
 
 or in your python script;
 
-    .. code-block:: bash
-    
-        from niriss_ghost import get_gap
-        get_gap.run(list-of-image, list-of-catalog)
+  .. code-block:: bash
+  
+      from niriss_ghost import get_gap
+      get_gap.run(list-of-image, list-of-catalog)
 
 
+Input arguments:
+
+- image: Input image(s). If more than one, then comma separated string e.g., image1_cal.fits,image2_cal.fits
+- catalog: Input catalog(s). If more than one, then comma separated string e.g., image1.cat,image2.cat
+      
 Optional arguments:
 
 - --nmc: Number of MCMC iterations (3000 default).

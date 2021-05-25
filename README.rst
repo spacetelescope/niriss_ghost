@@ -72,31 +72,6 @@ Optional arguments:
 - --f_tweak_dq: Change DQ arrays of the positions of the detected ghosts. You need the segmentation map of the provided catalog (_seg.fits).
 - --segmap: Segmentation map of the provided catalog, if f_tweak_dq==True. (Default: image.replace('.fits', '_seg.fits'))
  
-Determine ghost axis point (GAP) coordinates based on a calibrated image.
-
-.. code-block:: bash
-
-    python get_gap.py [image] [catalog]
-
-or in your python script;
-
-.. code-block:: bash
-
-    from niriss_ghost import get_gap
-    get_gap.run(list-of-images, list-of-catalogs)
-
-
-Input arguments:
-
-- image: Input image(s). If more than one, then comma separated string e.g., image1_cal.fits,image2_cal.fits
-- catalog: Input catalog(s). If more than one, then comma separated string e.g., image1.cat,image2.cat
-      
-Optional arguments:
-
-- --nmc: Number of MCMC iterations (3000 default).
-- --nwalkers: Number of walkers (20 default).
-- --check_flux: Use flux ratio for posterior calculation (True default).
-
 
 Appendix: Simulation of ghosts in a NIRISS scene
 ------------------------------------------------

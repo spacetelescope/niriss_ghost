@@ -9,14 +9,14 @@ Author: Takahiro Morishita
 Purpose
 -------
 
-NIRISS WFSS and direct imaging modes are known to produce optical ghosts when there are bright sources in the observed field of view, as summarized `here <https://jwst-docs.stsci.edu/near-infrared-imager-and-slitless-spectrograph/niriss-instrumentation/niriss-gr150-grisms#NIRISSGR150Grisms-Ghosts>`__.
-Users are advised to apply this code to final NIRISS images, so that they can avoid confusing real sources with optical ghosts in their final products.
+NIRISS WFSS and direct imaging modes are known to produce optical ghosts when there are bright sources in the observed field, as summarized `here <https://jwst-docs.stsci.edu/near-infrared-imager-and-slitless-spectrograph/niriss-instrumentation/niriss-gr150-grisms#NIRISSGR150Grisms-Ghosts>`__.
+Users have an option to apply the script provided in this repository to identify possible ghosts and mask them out.
 
-By providing _cal.fits image (IMAGE2 product) and source catalog to this script, you can:
+By providing _cal.fits image (IMAGE2 product) and source catalog to the script, you can:
 
-- identify possible ghost in the input image
+- identify possible ghosts in the input image
 - get a source catalog with a new flag column, ``is_this_ghost``.
-- Turn DQ arrays of the pixles of the detected ghosts to ``DO_NOT_USE``, so IMAGE3 pipeline ignores these pixels.
+- change values of the pixles of the detected ghosts in the DQ array to ``DO_NOT_USE``, so the pipeline IMAGE3 step will ignore these contaminated pixels.
 
 
 .. figure:: ./figure/DQ_masking.png

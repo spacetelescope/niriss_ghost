@@ -35,6 +35,11 @@ Installation
 
     python setup.py install
 
+or 
+
+.. code-block:: bash
+
+    pip install niriss_ghost
 
 Usage
 -----

@@ -50,7 +50,7 @@ or in your python script;
 .. code-block:: bash
 
     from niriss_ghost import detect_ghost_image2
-    detect_ghost_image2.run(list-of-image, list-of-catalog)
+    detect_ghost_image2.run(list-of-images, list-of-catalogs)
 
 Input arguments:
 
@@ -78,7 +78,7 @@ or in your python script;
   .. code-block:: bash
   
       from niriss_ghost import get_gap
-      get_gap.run(list-of-image, list-of-catalog)
+      get_gap.run(list-of-images, list-of-catalogs)
 
 
 Input arguments:

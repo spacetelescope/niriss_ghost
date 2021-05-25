@@ -16,55 +16,17 @@ from jwst import datamodels
 from niriss_ghost.utils import get_gap,get_ghost,str2bool,tweak_dq
 
 
-if __name__ == "__main__":
+def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq=True, DIR_OUT='./output/',
+    f_mirage=True, keyword_flux='source_sum', segmap=None):
     '''
-    Purpose
-    -------
-    This script is for detecting ghost in Image2 step products.
-    There are two algorithms used to flag possible ghost images.
-
-    1. Root method: Look into detected sources in Image2 catalog, predict positions of ghosts based on GAP, 
-    and then confirm if the source is consistent with the prediction.;
-
-    2. Catalog method: Retrieve bright sources from all sky catalogs (here GAIA, through astroquery),
-    then apply the same method as for root method to predict and confirm any sources in image2 catalog as ghosts.
-
-
-    Arguments
-    ---------
-    f_mirage : bool
-        If input images are real data, turn this off. If images are from Mirage, turn this on. 
-        This is due to the fact that ghosts were added in the seed image dimention, whereas analysis is done in i2d image.
-    f_tweak_dq : bool
-        Ghost detection in image2 products. Currently not supported.
-
-
-    Notes
-    -----
-    Ghost detection must be done on the distortion corrected frame, as the GAP coordinates were calculated so.
-
-
-    Returns
-    -------
-    A subset of the input source catalog, with a ghost flag column, "is_this_ghost", added.
-    For ghosts without original sources in the input catalog but in a catalog from astroquery, idsrc is set to > idarx.
+    Parameters
+    ----------
+    infiles : array
+        List of input fits image files.
+    files_cat : array
+        List of input catalog files. The number of the elements must be same as those in infiles.
 
     '''
-
-    parser = argparse.ArgumentParser(description='Run the NIRISS ghost detection script.')
-    parser.add_argument('input_image', metavar='input_image', type=str, nargs=1, help='Input image to be assessed.')
-    parser.add_argument('input_catalog', metavar='input_catalog', type=str, nargs=1, help='The source catalog derived with input_image.')
-    parser.add_argument('--f_verbose',default=False,help='Print comments.', type=str2bool)
-    parser.add_argument('--rlim',default=10,help='Search radius for ghost around the predicted position (in pixel).', type=float)
-    parser.add_argument('--frac_ghost',default=0.01,help='Flux fraction for ghosts.', type=float)
-    parser.add_argument('--o',default='./',help='Output directory.', type=str)
-    parser.add_argument('--f_tweak_dq',default=True,help='Tweak DQ array of the input image.', type=str2bool)
-    parser.add_argument('--f_mirage',default=True,help='Is input image created by Mirage?', type=str2bool)
-    parser.add_argument('--keyword_flux',default='source_sum',help='Keyword for a flux column in input_catalog', type=str)
-    parser.add_argument('--segmap',default=None,help='Segmentation map associated with input_catalog', type=str)
-    args = parser.parse_args()
-    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nRunning ghost detection script\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-    
     # ghosts with idsrc greater than the following number are identified through the Catalog method.
     idarx = 100000
 
@@ -72,19 +34,8 @@ if __name__ == "__main__":
     f_rootmethod = True
     f_gsc = True
 
-    f_verbose = args.f_verbose
-    rlim = args.rlim
-    frac_ghost = args.frac_ghost
-    f_tweak_dq = args.f_tweak_dq
-    DIR_OUT = args.o    
     if not os.path.exists(DIR_OUT):
         os.mkdir(DIR_OUT)
-
-    # Image;
-    infiles = args.input_image
-    # Catalog;
-    #files_cat = [infile.replace('_i2d.fits','_cat_man.ecsv') for infile in infiles]
-    files_cat = args.input_catalog
     
     for ff,infile in enumerate(infiles):
         file_root = infile.split('/')[-1].replace('.fits','')
@@ -113,7 +64,7 @@ if __name__ == "__main__":
             magzp = 25.0
             print('Magzp cannot be calculated from header. Set to %.1f'%magzp)
 
-        if args.f_mirage:
+        if f_mirage:
             # Add shift for image size difference.
             # This is due to the fact that ghosts were added in the seed image dimention, whereas analysis is done in i2d image.
             xshift = (2048-hd1['NAXIS1'])/2.
@@ -136,15 +87,14 @@ if __name__ == "__main__":
 
         # Check flux column:
         try:
-            flux_tmp = fd_cat[args.keyword_flux]
-            keyword_flux = args.keyword_flux
+            flux_tmp = fd_cat[keyword_flux]
             flux_cat = fd_cat[keyword_flux]
             try:# Remove unit, if it has any.
                 flux_cat = fd_cat[keyword_flux].value
             except:
                 pass
         except:
-            print('\n!!!\n`%s` column is not found in the input catalog.'%args.keyword_flux)
+            print('\n!!!\n`%s` column is not found in the input catalog.'%keyword_flux)
             print('Specify the flux column by adding --keyword_flux argument.')
             print('e.g.,\n python detect_ghost_image2.py image catalog --keyword_flux aper_total_flux')
             print('\nNo ghost hunting. Exiting.')
@@ -321,8 +271,8 @@ if __name__ == "__main__":
         if f_tweak_dq:
             print('Tweaking DQ array')
             con = (flag_gst==1)
-            if args.segmap != None:
-                segfile = args.segmap
+            if segmap != None:
+                segfile = segmap
             else:
                 segfile = infile.replace('.fits', '_seg.fits')
             
@@ -332,3 +282,64 @@ if __name__ == "__main__":
                 sys.exit()
             tweak_dq(fd_cat['id'][con], infile, segfile, outfile=outfile, DQ_SET=1)
             print('Successfully done!\n')
+
+
+
+if __name__ == "__main__":
+    '''
+    Purpose
+    -------
+    This script is for detecting ghost in Image2 step products.
+    There are two algorithms used to flag possible ghost images.
+
+    1. Root method: Look into detected sources in Image2 catalog, predict positions of ghosts based on GAP, 
+    and then confirm if the source is consistent with the prediction.;
+
+    2. Catalog method: Retrieve bright sources from all sky catalogs (here GAIA, through astroquery),
+    then apply the same method as for root method to predict and confirm any sources in image2 catalog as ghosts.
+
+
+    Arguments
+    ---------
+    f_mirage : bool
+        If input images are real data, turn this off. If images are from Mirage, turn this on. 
+        This is due to the fact that ghosts were added in the seed image dimention, whereas analysis is done in i2d image.
+    f_tweak_dq : bool
+        Ghost detection in image2 products. Currently not supported.
+
+
+    Notes
+    -----
+    Ghost detection must be done on the distortion corrected frame, as the GAP coordinates were calculated so.
+
+
+    Returns
+    -------
+    A subset of the input source catalog, with a ghost flag column, "is_this_ghost", added.
+    For ghosts without original sources in the input catalog but in a catalog from astroquery, idsrc is set to > idarx.
+
+    '''
+
+    parser = argparse.ArgumentParser(description='Run the NIRISS ghost detection script.')
+    parser.add_argument('input_image', metavar='input_image', type=str, nargs=1, help='Input image to be assessed.')
+    parser.add_argument('input_catalog', metavar='input_catalog', type=str, nargs=1, help='The source catalog derived with input_image.')
+    parser.add_argument('--f_verbose',default=False,help='Print comments.', type=str2bool)
+    parser.add_argument('--rlim',default=10,help='Search radius for ghost around the predicted position (in pixel).', type=float)
+    parser.add_argument('--frac_ghost',default=0.01,help='Flux fraction for ghosts.', type=float)
+    parser.add_argument('--o',default='./',help='Output directory.', type=str)
+    parser.add_argument('--f_tweak_dq',default=True,help='Tweak DQ array of the input image.', type=str2bool)
+    parser.add_argument('--f_mirage',default=True,help='Is input image created by Mirage?', type=str2bool)
+    parser.add_argument('--keyword_flux',default='source_sum',help='Keyword for a flux column in input_catalog', type=str)
+    parser.add_argument('--segmap',default=None,help='Segmentation map associated with input_catalog', type=str)
+    args = parser.parse_args()
+    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nRunning ghost detection script\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+
+
+    f_verbose = args.f_verbose
+    rlim = args.rlim
+    frac_ghost = args.frac_ghost
+    f_tweak_dq = args.f_tweak_dq
+    DIR_OUT = args.o    
+
+    run(args.input_image, args.input_catalog, f_verbose=f_verbose, rlim=rlim, frac_ghost=frac_ghost, \
+        f_tweak_dq=f_tweak_dq, DIR_OUT=DIR_OUT, f_mirage=args.f_mirage, keyword_flux=args.keyword_flux, segmap=args.segmap)

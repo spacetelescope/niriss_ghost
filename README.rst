@@ -45,6 +45,14 @@ Ghost detection in a calibrated image (i.e. _cal.fits from the JWST pipeline). S
 
     python detect_ghost_image2.py [image] [catalog]
 
+or in your python script;
+
+.. code-block:: bash
+
+    from niriss_ghost import detect_ghost_image2
+    detect_ghost_image2.run(list-of-image, list-of-catalog)
+
+
 Optional arguments:
 
 - --rlim: Search radius from the predicted coordinates of a ghost, in pixel.
@@ -60,6 +68,14 @@ Determine ghost axis point (GAP) coordinates based on a calibrated image.
 .. code-block:: bash
 
     python get_gap.py [image] [catalog]
+
+or in your python script;
+
+    .. code-block:: bash
+    
+        from niriss_ghost import get_gap
+        get_gap.run(list-of-image, list-of-catalog)
+
 
 Optional arguments:
 

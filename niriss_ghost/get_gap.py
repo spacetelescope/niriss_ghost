@@ -120,11 +120,15 @@ def get_lnlike(gap_tmp, fd_cat, pupil, xshift, yshift, rlim, check_flux=False):
     return lp + lnlike
 
 
-def calc_gap(file_image, file_catalog, xshift=0, yshift=0, rlim=10, f_mirage=True, check_flux=False, nmc=3000, nwalkers=20,
+def run(file_images, files_catalog, xshift=0, yshift=0, rlim=10, f_mirage=True, check_flux=False, nmc=3000, nwalkers=20,
     xini=1162.600, yini=937.900, logfini=-2):
     '''
     Parameters
     ----------
+    file_images : array
+        List of input fits image files.
+    files_catalog : array
+        List of input catalog files. The number of the elements must be same as those in infiles.
     check_flux : bool
         If include flux into log likeligood calculation. This depends on the catalog flux quality.
     xini, yini, logfini : float
@@ -133,67 +137,69 @@ def calc_gap(file_image, file_catalog, xshift=0, yshift=0, rlim=10, f_mirage=Tru
 
     import emcee
     import corner
-    fd_cat = ascii.read(file_catalog)
 
-    # Read image header;
-    hd = fits.open(file_image)[0].header
-    hd1 = fits.open(file_image)[1].header
-    filt = hd['FILTER']
-    pupil = hd['PUPIL']
-    XOFFSET = hd['XOFFSET']
-    YOFFSET = hd['YOFFSET']
-    try:
-        # _cal.fits
-        CDELT1 = np.abs(hd1['CD1_1'])
-    except:
-        CDELT1 = hd1['CDELT1']
-        print('CAUTION : Your input seems to be IMAGE3 products.')
+    for ff,file_image in enumerate(file_images):
+        fd_cat = ascii.read(files_catalog[ff])
 
-    if f_mirage:
-        xshift = (2048-hd1['NAXIS1'])/2.
-        yshift = (2048-hd1['NAXIS2'])/2.
+        # Read image header;
+        hd = fits.open(file_image)[0].header
+        hd1 = fits.open(file_image)[1].header
+        filt = hd['FILTER']
+        pupil = hd['PUPIL']
+        XOFFSET = hd['XOFFSET']
+        YOFFSET = hd['YOFFSET']
+        try:
+            # _cal.fits
+            CDELT1 = np.abs(hd1['CD1_1'])
+        except:
+            CDELT1 = hd1['CDELT1']
+            print('CAUTION : Your input seems to be IMAGE3 products.')
 
-    # Initial params;
-    gap_true = [xini, yini, logfini] # x,y,log(f_flux)
-    gap_tmp = gap_true
-    lnlike = get_lnlike(gap_tmp, fd_cat, pupil, xshift, yshift, rlim)
+        if f_mirage:
+            xshift = (2048-hd1['NAXIS1'])/2.
+            yshift = (2048-hd1['NAXIS2'])/2.
 
-    # Minimization;
-    nll = lambda *args: -get_lnlike(*args)
+        # Initial params;
+        gap_true = [xini, yini, logfini] # x,y,log(f_flux)
+        gap_tmp = gap_true
+        lnlike = get_lnlike(gap_tmp, fd_cat, pupil, xshift, yshift, rlim)
 
-    initial = np.array(gap_tmp)
-    # Random fluctuation in xy
-    initial[:2] +=  0.1 * np.random.randn(len(gap_tmp[:2]))
-    # Random fluctuation in logf
-    initial[2] +=  1e-2 * np.random.randn(1)
+        # Minimization;
+        nll = lambda *args: -get_lnlike(*args)
 
-    soln = minimize(nll, initial, args=(fd_cat, pupil, xshift, yshift, rlim))
-    m_ml, b_ml, log_f_ml = soln.x
-    print("parameters at the minimization are;",soln.x)
+        initial = np.array(gap_tmp)
+        # Random fluctuation in xy
+        initial[:2] +=  0.1 * np.random.randn(len(gap_tmp[:2]))
+        # Random fluctuation in logf
+        initial[2] +=  1e-2 * np.random.randn(1)
 
-    pos = soln.x + 1e-1 * np.random.randn(nwalkers, len(gap_tmp))
-    ndim = pos.shape[1]
+        soln = minimize(nll, initial, args=(fd_cat, pupil, xshift, yshift, rlim))
+        m_ml, b_ml, log_f_ml = soln.x
+        print("parameters at the minimization are;",soln.x)
 
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, get_lnlike, args=(fd_cat, pupil, xshift, yshift, rlim), kwargs={'check_flux': check_flux})
-    sampler.run_mcmc(pos, nmc, progress=True)
+        pos = soln.x + 1e-1 * np.random.randn(nwalkers, len(gap_tmp))
+        ndim = pos.shape[1]
 
-    # Make chain flat;
-    flat_samples = sampler.get_chain(discard=int(nmc/2), thin=1, flat=True)
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, get_lnlike, args=(fd_cat, pupil, xshift, yshift, rlim), kwargs={'check_flux': check_flux})
+        sampler.run_mcmc(pos, nmc, progress=True)
 
-    # Corner;
-    labels = ["$x_\mathrm{gap}$", "$y_\mathrm{gap}$", "$\log f$"]
-    fig = corner.corner(
-        flat_samples, labels=labels, truths=gap_true
-    )
-    plt.savefig('corner.png', dpi=100)
+        # Make chain flat;
+        flat_samples = sampler.get_chain(discard=int(nmc/2), thin=1, flat=True)
 
-    # Get params
-    for i in range(ndim):
-        mcmc = np.percentile(flat_samples[:, i], [16, 50, 84])
-        q = np.diff(mcmc)
-        txt = "\mathrm{{{3}}} = {0:.3f}_{{-{1:.3f}}}^{{{2:.3f}}}"
-        txt = txt.format(mcmc[1], q[0], q[1], labels[i])
-        print(txt)
+        # Corner;
+        labels = ["$x_\mathrm{gap}$", "$y_\mathrm{gap}$", "$\log f$"]
+        fig = corner.corner(
+            flat_samples, labels=labels, truths=gap_true
+        )
+        plt.savefig('corner.png', dpi=100)
+
+        # Get params
+        for i in range(ndim):
+            mcmc = np.percentile(flat_samples[:, i], [16, 50, 84])
+            q = np.diff(mcmc)
+            txt = "\mathrm{{{3}}} = {0:.3f}_{{-{1:.3f}}}^{{{2:.3f}}}"
+            txt = txt.format(mcmc[1], q[0], q[1], labels[i])
+            print(txt)
 
 
 if __name__ == "__main__":
@@ -214,5 +220,4 @@ if __name__ == "__main__":
     parser.add_argument('--check_flux',default=True,help='Is flux ratio included in posterior calculation?', type=str2bool)
     args = parser.parse_args()
     
-    for ii, image in enumerate(args.file_image):
-        calc_gap(args.file_image[ii], args.file_catalog[ii], check_flux=args.check_flux, nmc=args.nmc, nwalkers=args.nwalkers)
+    run(args.file_image, args.file_catalog, check_flux=args.check_flux, nmc=args.nmc, nwalkers=args.nwalkers)

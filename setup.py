@@ -2,7 +2,6 @@ from setuptools import setup, find_packages
 from setuptools.extension import Extension
 
 import os
-import numpy
 
 try:
     from Cython.Build import cythonize
@@ -17,6 +16,8 @@ else:
 
 print('C extension: {0}'.format(cext))
 
+with open("requirements.txt") as f:
+    required = f.read().splitlines()
 
 try:
     from setuptools import setup
@@ -61,7 +62,7 @@ setup(
     packages=['niriss_ghost'],#,'example'
     package_data={'niriss_ghost' : ['gap_summary.txt']},
     #package_dir={'src': 'src'},
-    requires=[],
+    install_requires=required,
     classifiers=[
         "Development Status :: 1 - Planning",
         'Intended Audience :: Science/Research',

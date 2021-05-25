@@ -13,13 +13,13 @@ from astroquery.vizier import Vizier
 from jwst import datamodels
 
 # This repository;
-from utils import get_gap,get_ghost,str2bool,tweak_dq
+from niriss_ghost.utils import get_gap,get_ghost,str2bool,tweak_dq
 
 
 if __name__ == "__main__":
     '''
-    Purpose:
-    ========
+    Purpose
+    -------
     This script is for detecting ghost in Image2 step products.
     There are two algorithms used to flag possible ghost images.
 
@@ -30,8 +30,8 @@ if __name__ == "__main__":
     then apply the same method as for root method to predict and confirm any sources in image2 catalog as ghosts.
 
 
-    Arguments:
-    ==========
+    Arguments
+    ---------
     f_mirage : bool
         If input images are real data, turn this off. If images are from Mirage, turn this on. 
         This is due to the fact that ghosts were added in the seed image dimention, whereas analysis is done in i2d image.
@@ -39,13 +39,13 @@ if __name__ == "__main__":
         Ghost detection in image2 products. Currently not supported.
 
 
-    Note:
-    =====
+    Notes
+    -----
     Ghost detection must be done on the distortion corrected frame, as the GAP coordinates were calculated so.
 
 
-    Return:
-    =======
+    Returns
+    -------
     A subset of the input source catalog, with a ghost flag column, "is_this_ghost", added.
     For ghosts without original sources in the input catalog but in a catalog from astroquery, idsrc is set to > idarx.
 
@@ -101,7 +101,7 @@ if __name__ == "__main__":
             CDELT1 = np.abs(hd1['CD1_1'])
         except:
             CDELT1 = hd1['CDELT1']
-            print('CAUTION : Your input seem to be IMAGE3 products.')
+            print('CAUTION : Your input seems to be IMAGE3 products.')
 
         try:
             # Magnitude zeropoint:

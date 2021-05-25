@@ -28,6 +28,14 @@ By providing _cal.fits image (IMAGE2 product) and source catalog to this script,
 
 
 
+Installation
+------------
+
+.. code-block:: bash
+
+    python setup.py install
+
+
 Usage
 -----
 

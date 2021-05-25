@@ -7,27 +7,22 @@ import sys
 import emcee
 from scipy.optimize import minimize
 
-#DIR_CODE = '/Users/tmorishita/GitHub/NIRISS_ghost/'
-#sys.path.append(DIR_CODE)
-#from utils import get_gap,get_ghost,str2bool
-from niriss_ghost.utils import get_gap,get_ghost,str2bool
-
 from astropy.io import fits,ascii
 import astropy.coordinates as coord
 import astropy.units as u
 from astropy.wcs import WCS
 from astroquery.vizier import Vizier
-
-from photutils import Background2D, MedianBackground, detect_sources, deblend_sources, source_properties
 from astropy.stats import gaussian_fwhm_to_sigma
 from astropy.convolution import Gaussian2DKernel
+from photutils import Background2D, MedianBackground, detect_sources, deblend_sources, source_properties
+
+from niriss_ghost.utils import get_gap,get_ghost,str2bool
 
 
 def get_rms_img(file_image, segfile_out=None, f_detect=False):
     '''
     '''
     data = fits.open(file_image)['SCI'].data
-    #threshold = detect_threshold(data, nsigma=1.)
 
     # Measure background and set detection threshold
     bkg_estimator = MedianBackground()
@@ -56,6 +51,9 @@ def get_rms_img(file_image, segfile_out=None, f_detect=False):
     return bkg_rms_med
 
 def log_prior(theta):
+    '''
+    Currently, no prior is set.
+    '''
     x, y, f = theta
     #if f>-2.2 and f<-1.8: # Prior, or range?
     if True: # Prior, or range?
@@ -65,13 +63,14 @@ def log_prior(theta):
 
 def get_lnlike(gap_tmp, fd_cat, pupil, xshift, yshift, rlim, check_flux=False):
     '''
-    Purpose:
-    ========
+    Purpose
+    -------
     Get log likelihood to evaluate current set of params, gap_tmp.
     
-    Input:
-    ======
-    rlim : Ghost will be identified if source is within this radius (pixel).
+    Parameters
+    ----------
+    rlim : float
+        Ghost will be identified if source is within this radius, in pixel.
     '''
 
     # Check if params are within range;
@@ -121,11 +120,15 @@ def get_lnlike(gap_tmp, fd_cat, pupil, xshift, yshift, rlim, check_flux=False):
     return lp + lnlike
 
 
-def calc_gap(file_image, file_catalog, xshift=0, yshift=0, rlim=10, f_mirage=True, check_flux=False, nmc=3000, nwalkers=20):
+def calc_gap(file_image, file_catalog, xshift=0, yshift=0, rlim=10, f_mirage=True, check_flux=False, nmc=3000, nwalkers=20,
+    xini=1162.600, yini=937.900, logfini=-2):
     '''
-    Input:
-    ======
-    check_flux: If include flux into log likeligood calculation. This depends on the catalog flux quality.
+    Parameters
+    ----------
+    check_flux : bool
+        If include flux into log likeligood calculation. This depends on the catalog flux quality.
+    xini, yini, logfini : float
+        Initial guess for [x,y] position of GAP (in pixel) and flux ratio (in log).
     '''
 
     import emcee
@@ -139,15 +142,19 @@ def calc_gap(file_image, file_catalog, xshift=0, yshift=0, rlim=10, f_mirage=Tru
     pupil = hd['PUPIL']
     XOFFSET = hd['XOFFSET']
     YOFFSET = hd['YOFFSET']
-    CDELT1 = hd1['CDELT1']
+    try:
+        # _cal.fits
+        CDELT1 = np.abs(hd1['CD1_1'])
+    except:
+        CDELT1 = hd1['CDELT1']
+        print('CAUTION : Your input seems to be IMAGE3 products.')
 
     if f_mirage:
         xshift = (2048-hd1['NAXIS1'])/2.
         yshift = (2048-hd1['NAXIS2'])/2.
 
     # Initial params;
-    gap_true = [1162.600, 937.900, -2] # x,y,log(f_flux)
-    #gap_tmp = [1160.600, 930.900, -2] # x,y,log(f_flux)
+    gap_true = [xini, yini, logfini] # x,y,log(f_flux)
     gap_tmp = gap_true
     lnlike = get_lnlike(gap_tmp, fd_cat, pupil, xshift, yshift, rlim)
 
@@ -191,12 +198,12 @@ def calc_gap(file_image, file_catalog, xshift=0, yshift=0, rlim=10, f_mirage=Tru
 
 if __name__ == "__main__":
     '''
-    Purpose:
-    ========
+    Purpose
+    -------
     Estimate GAP from image3 source catalog.
 
-    Return:
-    =======
+    Returns
+    -------
 
     '''
     parser = argparse.ArgumentParser(description='Run the NIRISS gap analyzer.')

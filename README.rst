@@ -10,7 +10,7 @@ Purpose
 -------
 
 NIRISS WFSS and direct imaging modes are known to produce optical ghosts when there are bright sources in the observed field, as summarized `here <https://jwst-docs.stsci.edu/near-infrared-imager-and-slitless-spectrograph/niriss-instrumentation/niriss-gr150-grisms#NIRISSGR150Grisms-Ghosts>`__.
-Users have an option to apply the script provided in this repository to identify possible ghosts and mask them out.
+Users can identify possible ghosts and mask them out by applying the script provided in this repository.
 
 By providing _cal.fits image (IMAGE2 product) and source catalog to the script, you can:
 

@@ -85,4 +85,4 @@ An example notebook is also available from this repository, which demonstrates a
     :width: 800
     :align: center
 
-    Result with a custom fits stamp.
+    *Result with a custom fits stamp.*

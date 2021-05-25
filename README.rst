@@ -81,9 +81,8 @@ Ghost simulation module has been implemented in Mirage. Take a look at the docum
 An example notebook is also available from this repository, which demonstrates a case with a custom input file for ghosts.
 
 
-Result with a custom fits stamp:
-
 .. figure:: ./figure/demo_custom.png
     :width: 800
     :align: center
 
+    Result with a custom fits stamp.

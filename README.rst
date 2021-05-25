@@ -75,10 +75,10 @@ Determine ghost axis point (GAP) coordinates based on a calibrated image.
 
 or in your python script;
 
-  .. code-block:: bash
-  
-      from niriss_ghost import get_gap
-      get_gap.run(list-of-images, list-of-catalogs)
+.. code-block:: bash
+
+    from niriss_ghost import get_gap
+    get_gap.run(list-of-images, list-of-catalogs)
 
 
 Input arguments:

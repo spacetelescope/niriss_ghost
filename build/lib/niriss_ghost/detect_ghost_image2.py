@@ -10,10 +10,9 @@ import astropy.coordinates as coord
 import astropy.units as u
 from astropy.wcs import WCS
 from astroquery.vizier import Vizier
-from jwst import datamodels
 
 # This repository;
-from utils import get_gap,get_ghost,str2bool,tweak_dq
+from utils import get_gap,get_ghost,str2bool
 
 
 if __name__ == "__main__":
@@ -184,6 +183,7 @@ if __name__ == "__main__":
         # No2; Catalog method
         #####################
         if f_gsc:
+            from jwst import datamodels
             fd = fits.open(infile)[1].data
             hd = fits.open(infile)[1].header        
             RA = hd['CRVAL1']
@@ -319,6 +319,7 @@ if __name__ == "__main__":
 
         # Tweak DQ array;
         if f_tweak_dq:
+            from utils import tweak_dq
             print('Tweaking DQ array')
             con = (flag_gst==1)
             if args.segmap != None:

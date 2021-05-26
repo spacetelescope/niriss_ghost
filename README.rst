@@ -75,8 +75,8 @@ Alternatively, you can run the script in your python script;
     detect_ghost_image2.run(list_images, list_catalogs)
  
 
-Appendix: Simulation of ghosts in a NIRISS scene
-------------------------------------------------
+Appendix: Simulation of ghosts in NIRISS scenes
+-----------------------------------------------
 
 Ghost simulation module has been implemented in Mirage. Take a look at the documentation `here <https://mirage-data-simulator.readthedocs.io/en/latest/ghosts.html>`__.
 

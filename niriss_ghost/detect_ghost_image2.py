@@ -17,7 +17,7 @@ from niriss_ghost.utils import get_gap,get_ghost,str2bool,tweak_dq
 
 
 def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq=True, DIR_OUT='./output/',
-    f_mirage=True, keyword_flux='source_sum', segmap=None):
+    f_mirage=True, keyword_flux='source_sum', segmap=None, idarx=100000):
     '''
     Parameters
     ----------
@@ -25,10 +25,12 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
         List of input fits image files.
     files_cat : array
         List of input catalog files. The number of the elements must be same as those in infiles.
+    idarx : int
+        ghosts with idsrc greater than this number are those identified through the Catalog method.
 
     '''
-    # ghosts with idsrc greater than the following number are identified through the Catalog method.
-    idarx = 100000
+    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nRunning ghost detection script\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+    
 
     # Flags for analysis method;
     f_rootmethod = True
@@ -332,8 +334,6 @@ if __name__ == "__main__":
     parser.add_argument('--keyword_flux',default='source_sum',help='Keyword for a flux column in input_catalog', type=str)
     parser.add_argument('--segmap',default=None,help='Segmentation map associated with input_catalog', type=str)
     args = parser.parse_args()
-    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nRunning ghost detection script\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-
 
     f_verbose = args.f_verbose
     rlim = args.rlim

@@ -205,15 +205,15 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
 
         # Save result;
         if True:
-            fig = plt.figure(figsize=(6,4))
-            fig.subplots_adjust(top=0.93, bottom=0.1, left=0.05, right=0.9, hspace=0.05, wspace=0.2)
+            fig = plt.figure(figsize=(4,4))
+            fig.subplots_adjust(top=0.98, bottom=0.1, left=0.1, right=0.98, hspace=0.05, wspace=0.2)
             ax = plt.subplot(111)
 
             fd_sci = fits.open(infile)[1].data
             ax.imshow(fd_sci, vmin=0, vmax=1, origin='lower')
 
             # All sources;
-            ax.scatter(fd_cat['xcentroid'].value, fd_cat['ycentroid'].value, marker='o', s=30, edgecolor='cyan', color='none', label='i2d sources')
+            ax.scatter(fd_cat['xcentroid'].value, fd_cat['ycentroid'].value, marker='o', s=30, edgecolor='cyan', color='none', label='Catalog sources')
 
             # Source in retrieved catalog;
             if False:
@@ -264,8 +264,8 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
 
             # Plot GAP:
             gaps = get_gap(pupil)
-            ax.scatter(gaps[0], gaps[1], marker='x', s=30, color='orange', label='GAP')
-            ax.legend(bbox_to_anchor=(1., 1.05))
+            ax.scatter(gaps[0], gaps[1], marker='x', s=30, color='orange', label='GAP (%s)'%pupil)
+            ax.legend()#bbox_to_anchor=(1., 1.05))
             plt.savefig('%s/results_%s.png'%(DIR_OUT,file_root), dpi=300)
             plt.close()
 
@@ -341,5 +341,7 @@ if __name__ == "__main__":
     f_tweak_dq = args.f_tweak_dq
     DIR_OUT = args.o    
 
-    run(args.input_image, args.input_catalog, f_verbose=f_verbose, rlim=rlim, frac_ghost=frac_ghost, \
+    input_images = args.input_image[0].split(',')
+    input_catalogs = args.input_catalog[0].split(',')
+    run(input_images, input_catalogs, f_verbose=f_verbose, rlim=rlim, frac_ghost=frac_ghost, \
         f_tweak_dq=f_tweak_dq, DIR_OUT=DIR_OUT, f_mirage=args.f_mirage, keyword_flux=args.keyword_flux, segmap=args.segmap)

@@ -17,17 +17,22 @@ from niriss_ghost.utils import get_gap,get_ghost,str2bool,tweak_dq
 
 
 def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq=True, DIR_OUT='./output/',
-    f_mirage=True, keyword_flux='source_sum', segmap=None, idarx=100000):
+    f_mirage=True, keyword_flux='source_sum', segmap=None, idarx=100000, keyword_id='label', 
+    keyword_xcent='xcentroid', keyword_ycent='ycentroid', keyword_coord='sky_centroid', 
+    f_save_result=True, out_cat=None, file_gap=None):
     '''
     Parameters
     ----------
-    infiles : array
+    infiles : list
         List of input fits image files.
-    files_cat : array
+    files_cat : list
         List of input catalog files. The number of the elements must be same as those in infiles.
     idarx : int
         ghosts with idsrc greater than this number are those identified through the Catalog method.
-
+    keyword_id : str
+        keyword for the object id column in files_cat. (can be `label`,`id`,`number`, depending on the version of photutils or sourcextractor)
+    file_gap : str
+        file name for gap summary file. If none, this will be gap_summary.txt
     '''
     print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nRunning ghost detection script\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
     
@@ -83,16 +88,20 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
         fd_cat = ascii.read(file_cat)
 
         # Empty Array for ghost
-        flag_gst = np.zeros(len(fd_cat['id']), 'int')
-        prob_gst = np.zeros(len(fd_cat['id']), 'float')
-        id_src = np.zeros(len(fd_cat['id']), 'int')
+        flag_gst = np.zeros(len(fd_cat[keyword_id]), 'int')
+        prob_gst = np.zeros(len(fd_cat[keyword_id]), 'float')
+        id_src = np.zeros(len(fd_cat[keyword_id]), 'int')
 
         # Check flux column:
         try:
             flux_tmp = fd_cat[keyword_flux]
             flux_cat = fd_cat[keyword_flux]
+            xcent = fd_cat[keyword_xcent]
+            ycent = fd_cat[keyword_ycent]
             try:# Remove unit, if it has any.
                 flux_cat = fd_cat[keyword_flux].value
+                xcent = fd_cat[keyword_xcent].value
+                ycent = fd_cat[keyword_ycent].value
             except:
                 pass
         except:
@@ -106,20 +115,20 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
         # No1; Root method
         ##################
         if f_rootmethod:
-            gst = get_ghost(fd_cat['xcentroid'][:].value, fd_cat['ycentroid'][:].value, \
+            gst = get_ghost(xcent, ycent, \
                             flux=flux_cat[:], filt=pupil,\
                             xshift=xshift, yshift=yshift)
 
-            for ii in range(len(fd_cat['id'])):
+            for ii in range(len(fd_cat[keyword_id])):
 
                 # Check the position:
-                rtmp = np.sqrt( (fd_cat['xcentroid'].value-gst[0][ii])**2 + (fd_cat['ycentroid'].value-gst[1][ii])**2 )
+                rtmp = np.sqrt( (xcent-gst[0][ii])**2 + (ycent-gst[1][ii])**2 )
                 iiy = np.argmin(rtmp)
 
                 # Check if source at the predicted positions is brighter than object of [ii].
                 if rtmp[iiy] < rlim and (flux_cat[iiy]-flux_cat[ii]) > 0:
 
-                    id_src[ii] = fd_cat['id'][iiy]
+                    id_src[ii] = fd_cat[keyword_id][iiy]
                     flag_gst[ii] = 1
                     
                     #if f_verbose:
@@ -187,7 +196,7 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
                 if flag_gst[ii] != 1: # If the source has not been flagged above yet.
 
                     # Check the position:
-                    rtmp = np.sqrt( (fd_cat['xcentroid'].value[ii] - gst_cat[0])**2 + (fd_cat['ycentroid'].value[ii] - gst_cat[1])**2 )
+                    rtmp = np.sqrt( (xcent[ii] - gst_cat[0])**2 + (ycent[ii] - gst_cat[1])**2 )
                     iiy = np.argmin(rtmp)
 
                     if rtmp[iiy] < rlim and (flux_GS[iiy] - flux_cat[ii]) > 0:
@@ -204,7 +213,7 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
 
 
         # Save result;
-        if True:
+        if f_save_result:
             fig = plt.figure(figsize=(4,4))
             fig.subplots_adjust(top=0.98, bottom=0.1, left=0.1, right=0.98, hspace=0.05, wspace=0.2)
             ax = plt.subplot(111)
@@ -213,27 +222,29 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
             ax.imshow(fd_sci, vmin=0, vmax=1, origin='lower')
 
             # All sources;
-            ax.scatter(fd_cat['xcentroid'].value, fd_cat['ycentroid'].value, marker='o', s=30, edgecolor='cyan', color='none', label='Catalog sources')
+            ax.scatter(xcent, ycent, marker='o', s=30, edgecolor='cyan', color='none', label='Catalog sources')
 
             # Source in retrieved catalog;
             if False:
                 ax.scatter(x, y, marker='o', s=30, edgecolor='lightgreen', color='none', label='GSC sources')
 
-            # Write to an ascii;            
-            fw_cat = open('%s/ghost_detected_cat_%s.txt'%(DIR_OUT, file_root),'w')
+            # Write to an ascii; 
+            if out_cat == None:
+                out_cat = '%s/ghost_detected_cat_%s.txt'%(DIR_OUT, file_root)
+            fw_cat = open(out_cat,'w')
             fw_cat.write('# id ra dec x y is_this_ghost id_src ra_src dec_src\n')
 
             f_label = True
             for ii in range(len(flag_gst)):
-                yghs = fd_cat['ycentroid'].value[ii]
-                xghs = fd_cat['xcentroid'].value[ii]
+                yghs = ycent[ii]
+                xghs = xcent[ii]
                 if flag_gst[ii] == 1:
-                    iix = np.where(fd_cat['id']==id_src[ii])
+                    iix = np.where(fd_cat[keyword_id]==id_src[ii])
                     if len(iix[0])>0:
-                        ysrc = fd_cat['ycentroid'].value[iix]
-                        xsrc = fd_cat['xcentroid'].value[iix]
-                        rasrc = fd_cat['sky_centroid'].ra.value[iix]
-                        decsrc = fd_cat['sky_centroid'].dec.value[iix]
+                        ysrc = ycent[iix]
+                        xsrc = xcent[iix]
+                        rasrc = fd_cat[keyword_coord].ra.value[iix]
+                        decsrc = fd_cat[keyword_coord].dec.value[iix]
 
                         if f_label:
                             label = 'IDed ghost'
@@ -244,46 +255,51 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
                         ax.scatter(xghs, yghs, marker='s', s=30, edgecolor='r', color='none', label=label)
                         shift = 1.0 # This is because photutils is 0-based, while ds9 is not.
                         fw_cat.write('%d %.7f %.7f %.7f %.7f %s %d %.7f %.7f\n'\
-                                    %(fd_cat['id'][ii], \
-                                    fd_cat['sky_centroid'][ii].ra.value, fd_cat['sky_centroid'][ii].dec.value, \
-                                    xghs, yghs, 'True', fd_cat['id'][iix], rasrc, decsrc))
+                                    %(fd_cat[keyword_id][ii], \
+                                    fd_cat[keyword_coord][ii].ra.value, fd_cat[keyword_coord][ii].dec.value, \
+                                    xghs, yghs, 'True', fd_cat[keyword_id][iix], rasrc, decsrc))
 
                     else: # Ghost from outside FoV;
                         fw_cat.write('%d %.7f %.7f %.7f %.7f %s %d %.7f %.7f\n'\
-                                    %(fd_cat['id'][ii], \
-                                    fd_cat['sky_centroid'][ii].ra.value, fd_cat['sky_centroid'][ii].dec.value, \
+                                    %(fd_cat[keyword_id][ii], \
+                                    fd_cat[keyword_coord][ii].ra.value, fd_cat[keyword_coord][ii].dec.value, \
                                     xghs, yghs, 'True', id_src[ii], ra_src_pub[ii], dec_src_pub[ii]))
 
                 else:
                     fw_cat.write('%d %.7f %.7f %.7f %.7f %s %f %f %f\n'\
-                                %(fd_cat['id'][ii], \
-                                fd_cat['sky_centroid'][ii].ra.value, fd_cat['sky_centroid'][ii].dec.value, \
+                                %(fd_cat[keyword_id][ii], \
+                                fd_cat[keyword_coord][ii].ra.value, fd_cat[keyword_coord][ii].dec.value, \
                                 xghs, yghs, 'False', np.nan, np.nan, np.nan))
 
             fw_cat.close()
+            print('Catalog saved to : %s'%(out_cat))
 
             # Plot GAP:
-            gaps = get_gap(pupil)
+            outplot = '%s/results_%s.png'%(DIR_OUT,file_root)
+            gaps = get_gap(pupil, file_gap=file_gap)
             ax.scatter(gaps[0], gaps[1], marker='x', s=30, color='orange', label='GAP (%s)'%pupil)
             ax.legend()#bbox_to_anchor=(1., 1.05))
-            plt.savefig('%s/results_%s.png'%(DIR_OUT,file_root), dpi=300)
+            plt.savefig(outplot, dpi=300)
             plt.close()
+            print('Plot saved to : %s'%outplot)
 
         # Tweak DQ array;
         if f_tweak_dq:
-            print('Tweaking DQ array')
+            print('Tweaking DQ array...')
             con = (flag_gst==1)
             if segmap != None:
                 segfile = segmap
             else:
                 segfile = infile.replace('.fits', '_seg.fits')
             
-            outfile = infile.replace('.fits', '_gst.fits')
+            outfile = DIR_OUT + infile.split('/')[-1].replace('.fits', '_gst.fits')
             if not os.path.exists(segfile):
                 print('\nSegmentation file (%s) is missing. No DQ tweaking.\nExiting.\n'%segfile)
                 sys.exit()
-            tweak_dq(fd_cat['id'][con], infile, segfile, outfile=outfile, DQ_SET=1)
-            print('Successfully done!\n')
+            tweak_dq(fd_cat[keyword_id][con], infile, segfile, outfile=outfile, DQ_SET=1)
+            print('New image with updated DQ saved to: %s'%outfile)
+        
+        print('Successfully done!\n')
 
 
 
@@ -333,6 +349,11 @@ if __name__ == "__main__":
     parser.add_argument('--f_mirage',default=True,help='Is input image created by Mirage?', type=str2bool)
     parser.add_argument('--keyword_flux',default='source_sum',help='Keyword for a flux column in input_catalog', type=str)
     parser.add_argument('--segmap',default=None,help='Segmentation map associated with input_catalog', type=str)
+    parser.add_argument('--keyword_id',default='id',help='keyword for the object id column in files_cat. (can be `label`,`id`,`number`)', type=str)
+    parser.add_argument('--keyword_xcent',default='xcentroid',help='keyword for object x-position.', type=str)
+    parser.add_argument('--keyword_ycent',default='ycentroid',help='keyword for object y-position.', type=str)
+    parser.add_argument('--keyword_coord',default='sky_centroid',help='keyword for object skyposition (ie radec).', type=str)
+    parser.add_argument('--file_gap',default=None,help='file name for gap summary.', type=str)
     args = parser.parse_args()
 
     f_verbose = args.f_verbose
@@ -344,4 +365,6 @@ if __name__ == "__main__":
     input_images = args.input_image[0].split(',')
     input_catalogs = args.input_catalog[0].split(',')
     run(input_images, input_catalogs, f_verbose=f_verbose, rlim=rlim, frac_ghost=frac_ghost, \
-        f_tweak_dq=f_tweak_dq, DIR_OUT=DIR_OUT, f_mirage=args.f_mirage, keyword_flux=args.keyword_flux, segmap=args.segmap)
+        f_tweak_dq=f_tweak_dq, DIR_OUT=DIR_OUT, f_mirage=args.f_mirage, keyword_flux=args.keyword_flux, \
+        segmap=args.segmap, keyword_id=args.keyword_id, keyword_xcent=args.keyword_xcent, keyword_ycent=args.keyword_ycent, \
+        keyword_coord=args.keyword_coord, file_gap=args.file_gap)

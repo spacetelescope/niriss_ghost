@@ -52,7 +52,7 @@ PACKAGE_PATH = os.path.abspath(os.path.join(__file__, os.pardir))
 
 setup(
     name = "niriss_ghost",
-    version = "0.1",
+    version = "1.0.0",
     author = "Takahiro Morishita",
     author_email = "tmorishita@stsci.edu",
     description = "A set of scripts for characterization of NIRISS ghosts",

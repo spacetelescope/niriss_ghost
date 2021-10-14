@@ -32,7 +32,7 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
     keyword_id : str
         keyword for the object id column in files_cat. (can be `label`,`id`,`number`, depending on the version of photutils or sourcextractor)
     file_gap : str
-        file name for gap summary file. If none, this will be gap_summary.txt
+        file name for gap summary file. If none, this will be niriss_ghost_gap_summary.txt
     '''
     print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\nRunning ghost detection script\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
     

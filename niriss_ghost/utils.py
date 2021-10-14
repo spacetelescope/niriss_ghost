@@ -135,8 +135,9 @@ def get_corners(x0, y0, filt, C, ORD='0', delx=40, dely=40, f_ds9=False, oversam
     # This should match filts;
     lambdas = [0.90, 1.15, 1.405, 1.498, 1.587, 1.984]
     filts = ['F090W','F115W','F140M','F150W','F158M','F200W']
-    iiw = np.where(np.asarray(filts) == filt.upper())
-    if len(iiw[0])==0:
+    try:
+        iiw = np.where(np.asarray(filts) == filt.upper())[0][0]
+    except:
         print('%s not found in '%(filt.upper()),filts)
         print('Returning None.')
         return None

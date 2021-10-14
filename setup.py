@@ -60,7 +60,7 @@ setup(
     url = "https://github.com/mtakahiro",
     download_url = "https://github.com/",
     packages=['niriss_ghost'],#,'example'
-    package_data={'niriss_ghost' : ['gap_summary.txt']},
+    package_data={'niriss_ghost' : ['niriss_ghost_gap_summary.txt']},
     #package_dir={'src': 'src'},
     install_requires=required,
     classifiers=[

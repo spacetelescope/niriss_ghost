@@ -40,7 +40,7 @@ def get_gap_wfss(pupil, filt, file_gap=None):
     '''
     if file_gap == None:
         this_path = os.path.realpath(__file__)
-        file_gap = '%s/gap_summary.txt'%(this_path.replace('utils.py',''))
+        file_gap = '%s/niriss_ghost_gap_summary.txt'%(this_path.replace('utils.py',''))
         print('Using gap summary file: %s'%file_gap)
 
     tab_gap = ascii.read(file_gap)
@@ -89,7 +89,7 @@ def get_ghost_wfss(x, y, flux=None, pupil='F200W',filt='CLEAR', shift=0, xshift=
     '''
     if file_gap == None:
         this_path = os.path.realpath(__file__)
-        file_gap = '%s/gap_summary.txt'%(this_path.replace('utils.py',''))
+        file_gap = '%s/niriss_ghost_gap_summary.txt'%(this_path.replace('utils.py',''))
         #print('Using gap summary file: %s'%file_gap)
     
     if gap_tmp[0] == None:
@@ -214,34 +214,35 @@ def flip(origin, point, direction='y'):
     return qx, qy
     
 
-def get_gap(filt, file_gap=None):
+def get_gap(filt, pupil='CLEAR', file_gap=None):
     '''
-    Purpose:
-    ========
+    Purpose
+    -------
     To get GAP coordinates corresponding to input filter.
     
-    Input:
-    ======
+    Input
+    -----
     filt : str
         filter of interest.
    
-    Return:
-    =======
+    Returns
+    -------
     x, y, and fraction of ghost flux over the source flux.
     
-    Note:
-    =====
+    Notes
+    -----
     GAP is based on CV3 data.
     We currently do not know fractional flux, tab_gap['frac_50'], i.e. there may be positional dependence too.
+    input pupil and filter keywords are reversed. Sorry for confusion...
 
     '''
     if file_gap == None:
         this_path = os.path.realpath(__file__)
-        file_gap = '%s/gap_summary.txt'%(this_path.replace('utils.py',''))
+        file_gap = '%s/niriss_ghost_gap_summary.txt'%(this_path.replace('utils.py',''))
         print('Using gap summary file: %s'%file_gap)
 
     tab_gap = ascii.read(file_gap)
-    iix = np.where(tab_gap['filt']==filt.upper())
+    iix = np.where( (tab_gap['pupil']==filt.upper()) & (tab_gap['filt']==pupil.upper()))
 
     if len(iix[0])>0:
         xgap, ygap = tab_gap['gapx_50'][iix], tab_gap['gapy_50'][iix]
@@ -256,13 +257,13 @@ def get_gap(filt, file_gap=None):
 
 def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tmp=[None,None,None], file_gap=None):
     '''
-    Purpose:
-    ========
+    Purpose
+    -------
     A function that gives expected ghost positions
     given positions of a source.
     
-    Parameters:
-    ===========
+    Parameters
+    ----------
     x,y : arrays
         coordinates for sources (arrays).
     flux : array
@@ -274,8 +275,8 @@ def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tm
     yshift : float
         Shift may be used, because photutils is 0-based, while ds9 is not.
 
-    Return:
-    =======
+    Returns
+    -------
     xgs, ygs :
         coordinates for ghosts
     flux_gs :
@@ -285,7 +286,7 @@ def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tm
     '''
     if file_gap == None:
         this_path = os.path.realpath(__file__)
-        file_gap = '%s/gap_summary.txt'%(this_path.replace('utils.py',''))
+        file_gap = '%s/niriss_ghost_gap_summary.txt'%(this_path.replace('utils.py',''))
         #print('Using gap summary file: %s'%file_gap)
     
     if gap_tmp[0] == None:

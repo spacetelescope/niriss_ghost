@@ -229,8 +229,8 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
                 ax.scatter(x, y, marker='o', s=30, edgecolor='lightgreen', color='none', label='GSC sources')
 
             # Write to an ascii; 
-            if out_cat == None:
-                out_cat = '%s/ghost_detected_cat_%s.txt'%(DIR_OUT, file_root)
+            if out_cat == None or len(infiles) > 1:
+                out_cat = os.path.join(DIR_OUT, f'ghost_detected_cat_{file_root}.txt')
             fw_cat = open(out_cat,'w')
             fw_cat.write('# id ra dec x y is_this_ghost id_src ra_src dec_src\n')
 

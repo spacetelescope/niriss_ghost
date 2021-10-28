@@ -13,11 +13,11 @@ from astroquery.vizier import Vizier
 from jwst import datamodels
 
 # This repository;
-from niriss_ghost.utils import get_gap,get_ghost,str2bool,tweak_dq
+from niriss_ghost.utils import get_gap,get_ghost,str2bool,tweak_dq,check_keyword
 
 
 def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq=True, DIR_OUT='./output/',
-    f_mirage=True, keyword_flux='source_sum', segmap=None, idarx=100000, keyword_id='label', 
+    f_mirage=True, segmap=None, idarx=100000, keyword_id='label', keyword_flux='source_sum', 
     keyword_xcent='xcentroid', keyword_ycent='ycentroid', keyword_coord='sky_centroid', 
     f_save_result=True, out_cat=None, file_gap=None):
     '''
@@ -59,7 +59,8 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
             CDELT1 = np.abs(hd1['CD1_1'])
         except:
             CDELT1 = hd1['CDELT1']
-            print('CAUTION : Your input seems to be IMAGE3 products.')
+            print('CAUTION : Your input seems to be i2d products.')
+            print('Use results with causion. Pixel scale is currently set to a default value.\n')
 
         try:
             # Magnitude zeropoint:
@@ -87,29 +88,30 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
         file_cat = files_cat[ff]
         fd_cat = ascii.read(file_cat)
 
+        # Check keyword:
+        keys_used = [keyword_id,keyword_flux,keyword_xcent,keyword_ycent,keyword_coord]
+        keys_str = ['keyword_id', 'keyword_flux', 'keyword_xcent', 'keyword_ycent', 'keyword_coord']
+        key_result = check_keyword(file_cat,keys_used,keys_str=keys_str)
+        if not key_result:
+            print('Exiting.')
+            sys.exit()
+
         # Empty Array for ghost
         flag_gst = np.zeros(len(fd_cat[keyword_id]), 'int')
         prob_gst = np.zeros(len(fd_cat[keyword_id]), 'float')
         id_src = np.zeros(len(fd_cat[keyword_id]), 'int')
 
         # Check flux column:
-        try:
-            flux_tmp = fd_cat[keyword_flux]
-            flux_cat = fd_cat[keyword_flux]
-            xcent = fd_cat[keyword_xcent]
-            ycent = fd_cat[keyword_ycent]
-            try:# Remove unit, if it has any.
-                flux_cat = fd_cat[keyword_flux].value
-                xcent = fd_cat[keyword_xcent].value
-                ycent = fd_cat[keyword_ycent].value
-            except:
-                pass
+        flux_tmp = fd_cat[keyword_flux]
+        flux_cat = fd_cat[keyword_flux]
+        xcent = fd_cat[keyword_xcent]
+        ycent = fd_cat[keyword_ycent]
+        try:# Remove unit, if it has any.
+            flux_cat = fd_cat[keyword_flux].value
+            xcent = fd_cat[keyword_xcent].value
+            ycent = fd_cat[keyword_ycent].value
         except:
-            print('\n!!!\n`%s` column is not found in the input catalog.'%keyword_flux)
-            print('Specify the flux column by adding --keyword_flux argument.')
-            print('e.g.,\n python detect_ghost_image2.py image catalog --keyword_flux aper_total_flux')
-            print('\nNo ghost hunting. Exiting.')
-            sys.exit()
+            pass
 
         ##################
         # No1; Root method
@@ -281,7 +283,7 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
             ax.legend()#bbox_to_anchor=(1., 1.05))
             plt.savefig(outplot, dpi=300)
             plt.close()
-            print('Plot saved to : %s'%outplot)
+            print('Plot saved to : %s\n'%outplot)
 
         # Tweak DQ array;
         if f_tweak_dq:
@@ -290,17 +292,17 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
             if segmap != None:
                 segfile = segmap
             else:
+                print('No segmtation map specified by --segmap. Guessing from the input catalog name...\n')
                 segfile = infile.replace('.fits', '_seg.fits')
             
             outfile = DIR_OUT + infile.split('/')[-1].replace('.fits', '_gst.fits')
             if not os.path.exists(segfile):
-                print('\nSegmentation file (%s) is missing. No DQ tweaking.\nExiting.\n'%segfile)
-                sys.exit()
-            tweak_dq(fd_cat[keyword_id][con], infile, segfile, outfile=outfile, DQ_SET=1)
-            print('New image with updated DQ saved to: %s'%outfile)
+                print('Segmentation file (%s) is missing. No DQ tweaking.\n'%segfile)
+            else:
+                tweak_dq(fd_cat[keyword_id][con], infile, segfile, outfile=outfile, DQ_SET=1)
+                print('New image with updated DQ saved to: %s\n'%outfile)
         
-        print('Successfully done!\n')
-
+        print('Successfully done! (%d/%d)\n'%(ff+1,len(infiles)))
 
 
 if __name__ == "__main__":

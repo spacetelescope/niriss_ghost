@@ -1,6 +1,6 @@
 
-Ghost detection tool for JWST NIRISS data
-=========================================
+Ghost identification tool for JWST NIRISS data
+==============================================
 
 Author: Takahiro Morishita
 
@@ -61,7 +61,10 @@ Optional arguments:
 - --frac_ghost: Fraction flux of a ghost compared to the source.
 - --o: Output directory. Default is set to the working directory.
 - --f_mirage: Is the input image created by Mirage? If not (i.e. on-sky data), set this False.
-- --keyword_flux: Column name for flux in ``catalog``. Default is source_sum (one that comes with photutils.).
+- --keyword_id: Column name for source id in ``catalog``. Default is id.
+- --keyword_flux: Column name for flux in ``catalog``. Default is source_sum.
+- --keyword_xcent: Column name for x-pixel-position in ``catalog``. Default is xcentroid.
+- --keyword_ycent: Column name for y-pixel-position in ``catalog``. Default is ycentroid.
 - --f_tweak_dq: Change DQ arrays of the positions of the detected ghosts. You need the segmentation map of the provided catalog (_seg.fits).
 - --segmap: Segmentation map of the provided catalog, if f_tweak_dq==True. (Default: image.replace('.fits', '_seg.fits'))
 
@@ -73,7 +76,16 @@ Alternatively, you can run the script in your python script;
     list_images = ['image1_cal.fits']
     list_catalogs = ['image1.cat']
     detect_ghost_image2.run(list_images, list_catalogs)
- 
+
+
+Caveat
+------
+
+1. The ghost id script is currently designed for _cal.fits image.
+
+2. Due to recent changes in the photutils package, the column keywords used in this script may not match with those in the input catalog. 
+If this happens, a warning will appear. Users may specify those keywords by using --keyword_* argumens (see above, `Optional arguments`).
+
 
 Appendix: Simulation of ghosts in NIRISS scenes
 -----------------------------------------------

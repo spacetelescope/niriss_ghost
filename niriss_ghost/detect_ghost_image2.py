@@ -243,8 +243,19 @@ def run(infiles, files_cat=None, f_verbose=True, rlim=10, frac_ghost=0.01, f_twe
             # Write to an ascii; 
             if out_cat == None:
                 out_cat = '%s/ghost_detected_cat_%s.txt'%(DIR_OUT, file_root)
+            
+            # Output catalog;
             fw_cat = open(out_cat,'w')
             fw_cat.write('# id ra dec x y is_this_ghost id_src ra_src dec_src\n')
+
+            # Get sky coord
+            try:
+                skyra = fd_cat[keyword_coord].ra.value
+                skydec = fd_cat[keyword_coord].dec.value
+            except: # In case catalog does not have wcs info...
+                print('WCS info not availabile in the catalog.')
+                skyra = np.zeros(len(fd_cat[keyword_id]),int) + np.nan
+                skydec = np.zeros(len(fd_cat[keyword_id]),int) + np.nan
 
             f_label = True
             for ii in range(len(flag_gst)):
@@ -255,8 +266,8 @@ def run(infiles, files_cat=None, f_verbose=True, rlim=10, frac_ghost=0.01, f_twe
                     if len(iix[0])>0:
                         ysrc = ycent[iix]
                         xsrc = xcent[iix]
-                        rasrc = fd_cat[keyword_coord].ra.value[iix]
-                        decsrc = fd_cat[keyword_coord].dec.value[iix]
+                        rasrc = skyra[iix]
+                        decsrc = skydec[iix]
 
                         if f_label:
                             label = 'IDed ghost'
@@ -268,19 +279,19 @@ def run(infiles, files_cat=None, f_verbose=True, rlim=10, frac_ghost=0.01, f_twe
                         shift = 1.0 # This is because photutils is 0-based, while ds9 is not.
                         fw_cat.write('%d %.7f %.7f %.7f %.7f %s %d %.7f %.7f\n'\
                                     %(fd_cat[keyword_id][ii], \
-                                    fd_cat[keyword_coord][ii].ra.value, fd_cat[keyword_coord][ii].dec.value, \
+                                    skyra[ii], skydec[ii], \
                                     xghs, yghs, 'True', fd_cat[keyword_id][iix], rasrc, decsrc))
 
                     else: # Ghost from outside FoV;
                         fw_cat.write('%d %.7f %.7f %.7f %.7f %s %d %.7f %.7f\n'\
                                     %(fd_cat[keyword_id][ii], \
-                                    fd_cat[keyword_coord][ii].ra.value, fd_cat[keyword_coord][ii].dec.value, \
+                                    skyra[ii], skydec[ii], \
                                     xghs, yghs, 'True', id_src[ii], ra_src_pub[ii], dec_src_pub[ii]))
 
                 else:
                     fw_cat.write('%d %.7f %.7f %.7f %.7f %s %f %f %f\n'\
                                 %(fd_cat[keyword_id][ii], \
-                                fd_cat[keyword_coord][ii].ra.value, fd_cat[keyword_coord][ii].dec.value, \
+                                skyra[ii], skydec[ii], \
                                 xghs, yghs, 'False', np.nan, np.nan, np.nan))
 
             fw_cat.close()

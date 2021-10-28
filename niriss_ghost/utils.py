@@ -4,6 +4,26 @@ import os
 from astropy.io import fits,ascii
 
 
+def check_keyword(file_cat, keywords, keys_str=None):
+    '''
+    file_cat : str
+        Ascii catalog to be used.
+    keywords : list
+        list of strings for keywords to be checked.
+    '''
+    flag = True
+    fd_cat = ascii.read(file_cat)
+    for kk,key in enumerate(keywords):
+        try:
+            value_tmp = fd_cat[key]
+        except:
+            print('\n!!! Warning !!!\n`%s` column is not found in the input catalog.'%key)
+            flag = False
+            if not keys_str == None:
+                print('Specify the column name by adding --%s argument.'%keys_str[kk])
+                print('e.g.,\n python detect_ghost_image2.py image catalog --%s column-that-exists\n'%keys_str[kk])
+    return flag
+
 def str2bool(v):
     if isinstance(v, bool):
        return v

@@ -19,7 +19,7 @@ from niriss_ghost.utils import get_gap,get_ghost,str2bool,tweak_dq,check_keyword
 def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq=True, DIR_OUT='./output/',
     f_mirage=True, segmap=None, idarx=100000, keyword_id='label', keyword_flux='source_sum', 
     keyword_xcent='xcentroid', keyword_ycent='ycentroid', keyword_coord='sky_centroid', 
-    f_save_result=True, out_cat=None, file_gap=None):
+    f_save_result=True, out_cat=None, file_gap=None, DQ_KEY='DQ'):
     '''
     Parameters
     ----------
@@ -299,8 +299,9 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
             if not os.path.exists(segfile):
                 print('Segmentation file (%s) is missing. No DQ tweaking.\n'%segfile)
             else:
-                tweak_dq(fd_cat[keyword_id][con], infile, segfile, outfile=outfile, DQ_SET=1)
-                print('New image with updated DQ saved to: %s\n'%outfile)
+                results_qd = tweak_dq(fd_cat[keyword_id][con], infile, segfile, outfile=outfile, DQ_SET=1, DQ_KEY=DQ_KEY)
+                if results_qd:
+                    print('New image with updated DQ saved to: %s\n'%outfile)
         
         print('Successfully done! (%d/%d)\n'%(ff+1,len(infiles)))
 

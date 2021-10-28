@@ -332,11 +332,20 @@ def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tm
     return xgs,ygs,flux_gs,x,y,flux
 
 
-def tweak_dq(id_gst, infile, segfile, outfile=None, DQ_SET=1):
+def tweak_dq(id_gst, infile, segfile, outfile=None, DQ_SET=1, DQ_KEY='DQ'):
     '''
+    Purpose
+    -------
+    To make a copy of input fits file and tweak its DQ array.
     '''
     if not outfile == None:
         outfile = infile.replace('.fits','_gst.fits')
+
+    try:
+        dq_array = fits.open(infile)[DW_KEY]
+    except:
+        print('DQ array, `%s`, not found. No DQ tweaking.'%DQ_KEY)
+        return False
 
     os.system('cp %s %s'%(infile, outfile))
     
@@ -345,7 +354,9 @@ def tweak_dq(id_gst, infile, segfile, outfile=None, DQ_SET=1):
         for id in id_gst:
             con = np.where(seg == id)
             # 1073741824
-            #hdul['DQ'].data[con] += DQ_SET
-            hdul['DQ'].data[con] = DQ_SET
+            #hdul[DQ_KEY].data[con] += DQ_SET
+            hdul[DQ_KEY].data[con] = DQ_SET
         
         hdul.flush()  # changes are written back to original.fits
+
+    return True

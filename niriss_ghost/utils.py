@@ -1,7 +1,55 @@
 import numpy as np
 import argparse
 import os
+import astropy.wcs as wcs
 from astropy.io import fits,ascii
+
+
+def run_photutils(image_cal, file_out=None, nsigma=1.5, npixels=20):
+    '''
+    image_cal : str
+        file name for _cal.fits file.
+    file_out : str
+        name for output catalog.
+    '''
+    from photutils import Background2D, MedianBackground, detect_sources, deblend_sources, source_properties
+    from astropy.stats import gaussian_fwhm_to_sigma
+    from astropy.convolution import Gaussian2DKernel
+    if file_out == None:
+        file_out = image_cal.replace('_cal.fits', '_cat_man.ecsv')
+        if file_out == image_cal:
+            print('Input file is not `_cal.fits` file. No photutils.')
+            return None
+
+    hdu = fits.open(image_cal)
+    data = hdu[1].data
+    imwcs = wcs.WCS(hdu[1].header, hdu)
+    err = hdu[2].data
+
+    # Measure background and set detection threshold
+    bkg_estimator = MedianBackground()
+    bkg = Background2D(data, (50, 50), filter_size=(3, 3), bkg_estimator=bkg_estimator)
+    #threshold = bkg.background + (15. * bkg.background_rms)
+    threshold = bkg.background + (10. * bkg.background_rms)
+
+    # Before detection, smooth image with Gaussian FWHM = n pixels
+    sigma = nsigma * gaussian_fwhm_to_sigma  
+    kernel = Gaussian2DKernel(sigma)#, x_size=5, y_size=5)
+    kernel.normalize()
+
+    # Detect and deblend
+    segm_detect = detect_sources(data, threshold, npixels=npixels)#, filter_kernel=kernel)
+
+    # Save segmentation map of detected objects
+    segm_hdu = fits.PrimaryHDU(segm_detect.data.astype(np.uint32), header=imwcs.to_header())
+    segm_hdu.writeto(image_cal.replace('_cal.fits','_cal_seg.fits'), overwrite=True)
+    
+    # Save cat;
+    cat = source_properties(data-bkg.background, segm_detect, wcs=imwcs, background=bkg.background, error=err)
+    tbl = cat.to_table()#columns=columns)
+
+    tbl.write(file_out, format='ascii.ecsv',overwrite=True)
+    return file_out
 
 
 def check_keyword(file_cat, keywords, keys_str=None):
@@ -23,6 +71,7 @@ def check_keyword(file_cat, keywords, keys_str=None):
                 print('Specify the column name by adding --%s argument.'%keys_str[kk])
                 print('e.g.,\n python detect_ghost_image2.py image catalog --%s column-that-exists\n'%keys_str[kk])
     return flag
+
 
 def str2bool(v):
     if isinstance(v, bool):
@@ -275,7 +324,6 @@ def get_gap(filt, pupil='CLEAR', file_gap=None):
     return xgap, ygap, frac
 
 
-
 def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tmp=[None,None,None], file_gap=None):
     '''
     Purpose
@@ -342,7 +390,7 @@ def tweak_dq(id_gst, infile, segfile, outfile=None, DQ_SET=1, DQ_KEY='DQ'):
         outfile = infile.replace('.fits','_gst.fits')
 
     try:
-        dq_array = fits.open(infile)[DW_KEY]
+        dq_array = fits.open(infile)[DQ_KEY]
     except:
         print('DQ array, `%s`, not found. No DQ tweaking.'%DQ_KEY)
         return False

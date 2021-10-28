@@ -13,10 +13,10 @@ from astroquery.vizier import Vizier
 from jwst import datamodels
 
 # This repository;
-from niriss_ghost.utils import get_gap,get_ghost,str2bool,tweak_dq,check_keyword
+from niriss_ghost.utils import get_gap,get_ghost,str2bool,tweak_dq,check_keyword,run_photutils
 
 
-def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq=True, DIR_OUT='./output/',
+def run(infiles, files_cat=None, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq=True, DIR_OUT='./output/',
     f_mirage=True, segmap=None, idarx=100000, keyword_id='label', keyword_flux='source_sum', 
     keyword_xcent='xcentroid', keyword_ycent='ycentroid', keyword_coord='sky_centroid', 
     f_save_result=True, out_cat=None, file_gap=None, DQ_KEY='DQ'):
@@ -26,7 +26,7 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
     infiles : list
         List of input fits image files.
     files_cat : list
-        List of input catalog files. The number of the elements must be same as those in infiles.
+        List of input catalog files. The number of the elements must be same as those in infiles. If None provided, the script runs photutils on the input images.
     idarx : int
         ghosts with idsrc greater than this number are those identified through the Catalog method.
     keyword_id : str
@@ -46,6 +46,17 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
     
     for ff,infile in enumerate(infiles):
         file_root = infile.split('/')[-1].replace('.fits','')
+
+        # Open source catalog;
+        if files_cat == None:
+            print('Running photutils on %s'%infile)
+            file_cat = run_photutils(infile)
+            if file_cat == None:
+                print('Failed. Exiting.')
+                sys.exit()
+        else:
+            file_cat = files_cat[ff]
+        fd_cat = ascii.read(file_cat)
 
         # Read header;
         hd = fits.open(infile)[0].header
@@ -85,9 +96,6 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
             print('Grism data are currently not supported. Skipped.')
             continue
 
-        file_cat = files_cat[ff]
-        fd_cat = ascii.read(file_cat)
-
         # Check keyword:
         keys_used = [keyword_id,keyword_flux,keyword_xcent,keyword_ycent,keyword_coord]
         keys_str = ['keyword_id', 'keyword_flux', 'keyword_xcent', 'keyword_ycent', 'keyword_coord']
@@ -102,12 +110,14 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
         id_src = np.zeros(len(fd_cat[keyword_id]), 'int')
 
         # Check flux column:
-        flux_tmp = fd_cat[keyword_flux]
         flux_cat = fd_cat[keyword_flux]
         xcent = fd_cat[keyword_xcent]
         ycent = fd_cat[keyword_ycent]
-        try:# Remove unit, if it has any.
+        try:# Remove unit, if any.
             flux_cat = fd_cat[keyword_flux].value
+        except:
+            pass
+        try:# Remove unit, if any.
             xcent = fd_cat[keyword_xcent].value
             ycent = fd_cat[keyword_ycent].value
         except:
@@ -292,7 +302,7 @@ def run(infiles, files_cat, f_verbose=True, rlim=10, frac_ghost=0.01, f_tweak_dq
             if segmap != None:
                 segfile = segmap
             else:
-                print('No segmtation map specified by --segmap. Guessing from the input catalog name...\n')
+                print('No segmtation map specified by --segmap. Guessing from the input image name...\n')
                 segfile = infile.replace('.fits', '_seg.fits')
             
             outfile = DIR_OUT + infile.split('/')[-1].replace('.fits', '_gst.fits')
@@ -344,6 +354,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run the NIRISS ghost detection script.')
     parser.add_argument('input_image', metavar='input_image', type=str, nargs=1, help='Input image to be assessed.')
     parser.add_argument('input_catalog', metavar='input_catalog', type=str, nargs=1, help='The source catalog derived with input_image.')
+    #parser.add_argument('--input_catalog', metavar='input_catalog', default='', type=str, nargs=1, help='The source catalog derived with input_image.')
     parser.add_argument('--f_verbose',default=False,help='Print comments.', type=str2bool)
     parser.add_argument('--rlim',default=10,help='Search radius for ghost around the predicted position (in pixel).', type=float)
     parser.add_argument('--frac_ghost',default=0.01,help='Flux fraction for ghosts.', type=float)
@@ -366,8 +377,12 @@ if __name__ == "__main__":
     DIR_OUT = args.o    
 
     input_images = args.input_image[0].split(',')
-    input_catalogs = args.input_catalog[0].split(',')
-    run(input_images, input_catalogs, f_verbose=f_verbose, rlim=rlim, frac_ghost=frac_ghost, \
+    if len(args.input_catalog) > 0:
+        input_catalogs = args.input_catalog[0].split(',')
+    else:
+        input_catalogs = None
+
+    run(input_images, files_cat=input_catalogs, f_verbose=f_verbose, rlim=rlim, frac_ghost=frac_ghost, \
         f_tweak_dq=f_tweak_dq, DIR_OUT=DIR_OUT, f_mirage=args.f_mirage, keyword_flux=args.keyword_flux, \
         segmap=args.segmap, keyword_id=args.keyword_id, keyword_xcent=args.keyword_xcent, keyword_ycent=args.keyword_ycent, \
         keyword_coord=args.keyword_coord, file_gap=args.file_gap)

@@ -81,8 +81,8 @@ Alternatively, you can run the script in your python script;
 Caveat
 ------
 
-1. This script currently supports only _cal.fits images.
-2. Due to recent changes in the photutils package, the column keywords used in this script may not match with those in the input catalog. 
+- This script currently supports only _cal.fits images.
+- Due to recent changes in the photutils package, the column keywords used in this script may not match with those in the input catalog. 
 If this happens, a warning will appear. Users may specify those keywords by using --keyword_* argumens (see above, `Optional arguments`).
 
 

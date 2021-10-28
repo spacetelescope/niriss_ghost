@@ -1,6 +1,6 @@
 
-Ghost detection tool for JWST NIRISS data
-=========================================
+Ghost identification tool for JWST NIRISS data
+==============================================
 
 Author: Takahiro Morishita
 
@@ -52,18 +52,21 @@ Ghost detection in a calibrated image (i.e. _cal.fits from the JWST pipeline). S
 
 Input arguments:
 
-- image: Input image(s). If more than one, then comma separated string e.g., image1_cal.fits,image2_cal.fits
-- catalog: Input catalog(s). If more than one, then comma separated string e.g., image1.cat,image2.cat
+- ``image``: Input image(s). If more than one, then comma separated string e.g., image1_cal.fits,image2_cal.fits
+- ``catalog``: Input catalog(s). If more than one, then comma separated string e.g., image1.cat,image2.cat
 
 Optional arguments:
 
-- --rlim: Search radius from the predicted coordinates of a ghost, in pixel.
-- --frac_ghost: Fraction flux of a ghost compared to the source.
-- --o: Output directory. Default is set to the working directory.
-- --f_mirage: Is the input image created by Mirage? If not (i.e. on-sky data), set this False.
-- --keyword_flux: Column name for flux in ``catalog``. Default is source_sum (one that comes with photutils.).
-- --f_tweak_dq: Change DQ arrays of the positions of the detected ghosts. You need the segmentation map of the provided catalog (_seg.fits).
-- --segmap: Segmentation map of the provided catalog, if f_tweak_dq==True. (Default: image.replace('.fits', '_seg.fits'))
+- ``--rlim``: Search radius from the predicted coordinates of a ghost, in pixel.
+- ``--frac_ghost``: Fraction flux of a ghost compared to the source.
+- ``--o``: Output directory. Default is set to the working directory.
+- ``--f_mirage``: Is the input image created by Mirage? If not (i.e. on-sky data), set this False.
+- ``--keyword_id``: Column name for source id in ``catalog``. Default is id.
+- ``--keyword_flux``: Column name for flux in ``catalog``. Default is source_sum.
+- ``--keyword_xcent``: Column name for x-pixel-position in ``catalog``. Default is xcentroid.
+- ``--keyword_ycent``: Column name for y-pixel-position in ``catalog``. Default is ycentroid.
+- ``--f_tweak_dq``: Change DQ arrays of the positions of the detected ghosts. You need the segmentation map of the provided catalog (_seg.fits).
+- ``--segmap``: Segmentation map of the provided catalog, if f_tweak_dq==True. (Default: image.replace('.fits', '_seg.fits'))
 
 Alternatively, you can run the script in your python script;
 
@@ -73,7 +76,14 @@ Alternatively, you can run the script in your python script;
     list_images = ['image1_cal.fits']
     list_catalogs = ['image1.cat']
     detect_ghost_image2.run(list_images, list_catalogs)
- 
+
+
+Caveat
+------
+
+- This script currently supports only _cal.fits images.
+- Due to recent changes in the photutils package, the column keywords used in this script may not match with those in the input catalog. If this happens, a warning will appear. Users may specify those keywords by using ``--keyword_*`` argumens (see above, Optional arguments).
+
 
 Appendix: Simulation of ghosts in NIRISS scenes
 -----------------------------------------------

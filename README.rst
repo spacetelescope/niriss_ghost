@@ -61,7 +61,7 @@ Optional arguments:
 - ``--frac_ghost``: Fraction flux of a ghost compared to the source.
 - ``--o``: Output directory. Default is set to the working directory.
 - ``--f_mirage``: Is the input image created by Mirage? If not (i.e. on-sky data), set this False.
-- ``--keyword_id``: Column name for source id in ``catalog``. Default is id.
+- ``--keyword_id``: Column name for source id in ``catalog``. Default value is ``label``.
 - ``--keyword_flux``: Column name for flux in ``catalog``. Default is source_sum.
 - ``--keyword_xcent``: Column name for x-pixel-position in ``catalog``. Default is xcentroid.
 - ``--keyword_ycent``: Column name for y-pixel-position in ``catalog``. Default is ycentroid.

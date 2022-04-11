@@ -180,10 +180,12 @@ def get_ghost_wfss(x, y, flux=None, pupil='F200W',filt='CLEAR', shift=0, xshift=
     except:
         flux_gs = np.zeros(len(xgap),'float')
 
-    xgs.name = 'x_ghost'
-    ygs.name = 'y_ghost'
-    flux_gs.name = 'flux_ghost'
-        
+    try:
+        xgs.name = 'x_ghost'
+        ygs.name = 'y_ghost'
+        flux_gs.name = 'flux_ghost'
+    except:
+        pass        
     return xgs,ygs,flux_gs,x,y,flux
 
 
@@ -381,10 +383,13 @@ def get_ghost(x, y, flux=None, filt='F200W', shift=0, xshift=0, yshift=0, gap_tm
     except:
         flux_gs = np.zeros(len(xgap),'float')
 
-    xgs.name = 'x_ghost'
-    ygs.name = 'y_ghost'
-    flux_gs.name = 'flux_ghost'
-        
+    try:
+        xgs.name = 'x_ghost'
+        ygs.name = 'y_ghost'
+        flux_gs.name = 'flux_ghost'
+    except:
+        pass
+
     return xgs,ygs,flux_gs,x,y,flux
 
 

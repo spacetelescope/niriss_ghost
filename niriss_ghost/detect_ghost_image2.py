@@ -184,44 +184,49 @@ def run(infiles, files_cat=None, f_verbose=True, rlim=10, frac_ghost=0.01, f_twe
             # Get ghost positions;
             # Input magnitude;
             mvega2ab = -0.08
-            GSmag = result[0]['Gmag'] + mvega2ab
-            flux_GS = 10**(-(GSmag-magzp)/(2.5)) # Fnu with the same magzp as input image.
+            try:
+                GSmag = result[0]['Gmag'] + mvega2ab
+                no_stars = False
+            except IndexError:
+                no_stars = True
+            if no_stars is False:
+                flux_GS = 10**(-(GSmag-magzp)/(2.5)) # Fnu with the same magzp as input image.
 
-            RA_key = 'RA_ICRS'
-            DE_key = 'DE_ICRS'
-            #RA_key = 'RAICRS'
-            #DE_key = 'DEICRS'
-            
-            # Get pixel position of GAIA sources;
-            im = datamodels.open(infile)
-            x, y = im.meta.wcs.backward_transform(result[0][RA_key],result[0][DE_key])
-            id_pub = np.arange(0,len(x),1)
+                RA_key = 'RA_ICRS'
+                DE_key = 'DE_ICRS'
+                #RA_key = 'RAICRS'
+                #DE_key = 'DEICRS'
+                
+                # Get pixel position of GAIA sources;
+                im = datamodels.open(infile)
+                x, y = im.meta.wcs.backward_transform(result[0][RA_key],result[0][DE_key])
+                id_pub = np.arange(0,len(x),1)
 
-            ra_src_pub = np.zeros(len(flag_gst[:]),'float')
-            dec_src_pub = np.zeros(len(flag_gst[:]),'float')
-            
-            # Get ghost xy;
-            gst_cat = get_ghost(x, y, flux=flux_GS, filt=pupil, xshift=xshift, yshift=yshift)
+                ra_src_pub = np.zeros(len(flag_gst[:]),'float')
+                dec_src_pub = np.zeros(len(flag_gst[:]),'float')
+                
+                # Get ghost xy;
+                gst_cat = get_ghost(x, y, flux=flux_GS, filt=pupil, xshift=xshift, yshift=yshift)
 
-            # Cross match;
-            for ii in range(len(flag_gst[:])):
-                if flag_gst[ii] != 1: # If the source has not been flagged above yet.
+                # Cross match;
+                for ii in range(len(flag_gst[:])):
+                    if flag_gst[ii] != 1: # If the source has not been flagged above yet.
 
-                    # Check the position:
-                    rtmp = np.sqrt( (xcent[ii] - gst_cat[0])**2 + (ycent[ii] - gst_cat[1])**2 )
-                    iiy = np.argmin(rtmp)
+                        # Check the position:
+                        rtmp = np.sqrt( (xcent[ii] - gst_cat[0])**2 + (ycent[ii] - gst_cat[1])**2 )
+                        iiy = np.argmin(rtmp)
 
-                    if rtmp[iiy] < rlim and (flux_GS[iiy] - flux_cat[ii]) > 0:
-                        id_src[ii] = idarx + ii
-                        flag_gst[ii] = 1
-                        prob_pos = np.exp(-0.5 * rtmp[iiy]**2)
-                        residual = np.abs(flux_cat[ii]*frac_ghost - flux_GS[iiy])
-                        expectation = flux_cat[ii]*frac_ghost
-                        prob_flux = np.exp(-0.5 * residual**2/expectation)
-                        prob_gst[ii] = prob_pos * prob_flux
+                        if rtmp[iiy] < rlim and (flux_GS[iiy] - flux_cat[ii]) > 0:
+                            id_src[ii] = idarx + ii
+                            flag_gst[ii] = 1
+                            prob_pos = np.exp(-0.5 * rtmp[iiy]**2)
+                            residual = np.abs(flux_cat[ii]*frac_ghost - flux_GS[iiy])
+                            expectation = flux_cat[ii]*frac_ghost
+                            prob_flux = np.exp(-0.5 * residual**2/expectation)
+                            prob_gst[ii] = prob_pos * prob_flux
 
-                        ra_src_pub[ii] = result[0][RA_key][iiy]
-                        dec_src_pub[ii] = result[0][DE_key][iiy]
+                            ra_src_pub[ii] = result[0][RA_key][iiy]
+                            dec_src_pub[ii] = result[0][DE_key][iiy]
 
 
         # Save result;
